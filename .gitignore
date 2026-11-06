@@ -1,0 +1,14 @@
+# Secrets : ne jamais publier
+.env
+*.env
+!.env.example
+
+# Dépendances et fichiers générés
+node_modules/
+__pycache__/
+cache_liquipedia/
+*.pyc
+
+# Système
+.DS_Store
+Thumbs.db

@@ -1,0 +1,83 @@
+/* ===========================================================================
+   OverTime - direction artistique
+   Sombre et sobre ; la couleur est réservée à ce qui compte :
+   les cotes, les actions, les gains et pertes, l'identité des jeux.
+   =========================================================================== */
+
+:root {
+	color-scheme: dark;
+
+	/* Fonds, du plus profond au plus proche */
+	--fond: #0b0e14;
+	--surface: #141924;
+	--surface-2: #1c2331;
+	--bord: #263042;
+
+	/* Textes (contrastes vérifiés sur --surface : >= 4,5:1) */
+	--texte: #e8ecf4;
+	--texte-2: #9aa4b8;
+
+	/* Couleurs d'action */
+	--accent: #8b7bff; /* violet OverTime : boutons, onglet actif */
+	--accent-fort: #a99dff;
+	--cote: #2dd4bf; /* turquoise : les cotes */
+	--gain: #34d399;
+	--perte: #f87171;
+	--alerte: #fbbf24;
+
+	/* Identité discrète de chaque jeu (petites pastilles) */
+	--jeu-lol: #c8a75a;
+	--jeu-valorant: #ff4655;
+	--jeu-fortnite: #b07cff;
+	--jeu-rocket: #4f9dff;
+	--jeu-tft: #e9b949;
+	--jeu-cod: #9ccc65;
+	--jeu-warzone: #7cb342;
+	--jeu-2xko: #ff7a45;
+
+	--rayon: 14px;
+	--police: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+	--chiffres: 'SF Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--fond);
+	color: var(--texte);
+	font-family: var(--police);
+	font-size: 16px;
+	line-height: 1.4;
+	-webkit-font-smoothing: antialiased;
+	-webkit-tap-highlight-color: transparent;
+}
+
+a {
+	color: var(--accent-fort);
+}
+
+/* Focus toujours visible pour la navigation au clavier */
+:focus-visible {
+	outline: 2px solid var(--accent-fort);
+	outline-offset: 2px;
+}
+
+.visuellement-cache {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none !important;
+		animation: none !important;
+	}
+}

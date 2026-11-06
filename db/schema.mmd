@@ -1,0 +1,78 @@
+flowchart LR
+    classDef ref fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+    classDef match fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    classDef pari fill:#FAEEDA,stroke:#854F0B,color:#633806
+    classDef eco fill:#FBEAF0,stroke:#993556,color:#72243E
+    classDef src fill:#F1EFE8,stroke:#5F5E5A,color:#444441
+
+    subgraph A["A · Référentiel e-sport"]
+        jeu["jeu<br/><small>LoL, Valorant, Fortnite…</small>"]
+        competition["competition<br/><small>LEC Spring, Worlds…</small>"]
+        equipe["equipe"]
+        joueur["joueur"]
+        contrat["contrat<br/><small>qui, où, quand</small>"]
+    end
+
+    subgraph B["B · Rencontres et statistiques"]
+        serie["serie<br/><small>BO1 / BO3 / BO5 / lobby</small>"]
+        participation["participation<br/><small>équipe ou joueur</small>"]
+        partie["partie<br/><small>une map / une game</small>"]
+        stat_participant["stat_participant<br/><small>drakes, âme, kills équipe</small>"]
+        stat_joueur["stat_joueur<br/><small>kills, morts, dégâts</small>"]
+        note_elo["note_elo"]
+    end
+
+    subgraph C["C · Paris entre amis"]
+        utilisateur["utilisateur"]
+        ligue["ligue<br/><small>règles de l'économie</small>"]
+        membre_ligue["membre_ligue"]
+        saison["saison<br/><small>un semestre</small>"]
+        marche["marche<br/><small>la question</small>"]
+        issue["issue<br/><small>réponse + cote</small>"]
+        pari["pari"]
+        pari_selection["pari_selection"]
+    end
+
+    subgraph D["D · Économie"]
+        mouvement["mouvement_noxus<br/><small>livre de comptes</small>"]
+    end
+
+    subgraph E["E · Provenance"]
+        source["source"]
+        idext["identifiant_externe"]
+    end
+
+    jeu --> competition --> serie
+    joueur --> contrat
+    equipe --> contrat
+    serie --> participation
+    equipe --> participation
+    serie --> partie
+    partie --> stat_participant
+    participation --> stat_participant
+    partie --> stat_joueur
+    participation --> stat_joueur
+    stat_joueur --- joueur
+    equipe --> note_elo
+    serie --> marche --> issue --> pari_selection
+    pari --> pari_selection
+    utilisateur --> membre_ligue
+    ligue --> membre_ligue
+    membre_ligue --> pari
+    membre_ligue --> mouvement
+    pari --> mouvement
+    ligue --> saison
+    saison --> pari
+    saison --> mouvement
+    source --> idext
+
+    class jeu,competition,equipe,joueur,contrat ref
+    class serie,participation,partie,stat_participant,stat_joueur,note_elo match
+    class utilisateur,ligue,membre_ligue,saison,marche,issue,pari,pari_selection pari
+    class mouvement eco
+    class source,idext src
+    style A fill:#FAFAF8,stroke:#B4B2A9
+    style B fill:#FAFAF8,stroke:#B4B2A9
+    style C fill:#FAFAF8,stroke:#B4B2A9
+    style D fill:#FAFAF8,stroke:#B4B2A9
+    style E fill:#FAFAF8,stroke:#B4B2A9

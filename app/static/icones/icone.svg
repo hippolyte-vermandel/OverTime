@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0b0e14"/>
+  <!-- Le cadran : un tour presque complet (le temps réglementaire)... -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#8b7bff" stroke-width="44"
+          stroke-linecap="round" stroke-dasharray="760 1000" transform="rotate(-90 256 256)"/>
+  <!-- ...et le petit bout en plus : les prolongations -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#2dd4bf" stroke-width="44"
+          stroke-linecap="round" stroke-dasharray="80 1000" stroke-dashoffset="-830"
+          transform="rotate(-90 256 256)"/>
+  <circle cx="256" cy="256" r="26" fill="#e8ecf4"/>
+</svg>
