@@ -1,0 +1,401 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T16:12:17Z",
+  "title": "Design System: OverTime",
+  "extensions": {
+    "colorMeta": {
+      "magenta-arene": {
+        "role": "primary",
+        "displayName": "Magenta Arène",
+        "canonical": "#FF4FD8",
+        "tonalRamp": [
+          "#411437",
+          "#7B2668",
+          "#B8399C",
+          "#FF4FD8",
+          "#FF83E3",
+          "#FFA9EC",
+          "#FFC7F2",
+          "#FFDAF6"
+        ]
+      },
+      "vert-cote": {
+        "role": "secondary",
+        "displayName": "Vert Cote",
+        "canonical": "#C6FF4D",
+        "tonalRamp": [
+          "#334113",
+          "#5F7B25",
+          "#8FB837",
+          "#C6FF4D",
+          "#D7FF82",
+          "#E3FFA8",
+          "#EDFFC7",
+          "#F3FFDA"
+        ]
+      },
+      "violet-gradin": {
+        "role": "tertiary",
+        "displayName": "Violet Gradin",
+        "canonical": "#8264FF",
+        "tonalRamp": [
+          "#211941",
+          "#3E307B",
+          "#5E48B8",
+          "#8264FF",
+          "#A792FF",
+          "#C2B3FF",
+          "#D7CEFF",
+          "#E5DEFF"
+        ]
+      },
+      "ambre-fermeture": {
+        "role": "tertiary",
+        "displayName": "Ambre Fermeture",
+        "canonical": "#FFB547",
+        "tonalRamp": [
+          "#412E12",
+          "#7B5722",
+          "#B88333",
+          "#FFB547",
+          "#FFCB7E",
+          "#FFDBA5",
+          "#FFE7C5",
+          "#FFEFD8"
+        ]
+      },
+      "rouge-perte": {
+        "role": "neutral",
+        "displayName": "Rouge Perte",
+        "canonical": "#FF9494",
+        "tonalRamp": [
+          "#412626",
+          "#7B4747",
+          "#B86B6B",
+          "#FF9494",
+          "#FFB4B4",
+          "#FFCBCB",
+          "#FFDDDD",
+          "#FFE8E8"
+        ]
+      },
+      "menthe-victoire": {
+        "role": "neutral",
+        "displayName": "Menthe Victoire",
+        "canonical": "#8FE3C0",
+        "tonalRamp": [
+          "#243A31",
+          "#456D5C",
+          "#67A48B",
+          "#8FE3C0",
+          "#B0EBD2",
+          "#C8F1E0",
+          "#DBF6EB",
+          "#E7F9F1"
+        ]
+      },
+      "nuit-arene": {
+        "role": "neutral",
+        "displayName": "Nuit de l’arène",
+        "canonical": "#0C0C12",
+        "tonalRamp": [
+          "#030304",
+          "#050508",
+          "#08080D",
+          "#0C0C12",
+          "#545459",
+          "#88888B",
+          "#B2B2B4",
+          "#CCCCCD"
+        ]
+      },
+      "surface-gradin": {
+        "role": "neutral",
+        "displayName": "Surface Gradin",
+        "canonical": "#15141B",
+        "tonalRamp": [
+          "#050506",
+          "#0A090D",
+          "#0F0E13",
+          "#15141B",
+          "#5B5A5F",
+          "#8D8C90",
+          "#B5B5B7",
+          "#CECECF"
+        ]
+      },
+      "surface-carte": {
+        "role": "neutral",
+        "displayName": "Surface Carte",
+        "canonical": "#1B1A22",
+        "tonalRamp": [
+          "#060608",
+          "#0D0C10",
+          "#131218",
+          "#1B1A22",
+          "#5F5E64",
+          "#908F93",
+          "#B7B7B9",
+          "#CFCFD1"
+        ]
+      },
+      "surface-active": {
+        "role": "neutral",
+        "displayName": "Surface Active",
+        "canonical": "#2A2833",
+        "tonalRamp": [
+          "#0A0A0D",
+          "#141318",
+          "#1E1C24",
+          "#2A2833",
+          "#696870",
+          "#97969B",
+          "#BCBBBE",
+          "#D2D2D4"
+        ]
+      },
+      "bordure-forte": {
+        "role": "neutral",
+        "displayName": "Bordure forte",
+        "canonical": "#383542",
+        "tonalRamp": [
+          "#0E0D11",
+          "#1B191F",
+          "#28262F",
+          "#383542",
+          "#73717A",
+          "#9E9CA3",
+          "#C0BFC3",
+          "#D5D5D7"
+        ]
+      },
+      "texte-principal": {
+        "role": "neutral",
+        "displayName": "Texte principal",
+        "canonical": "#F1F0F5",
+        "tonalRamp": [
+          "#3E3E3F",
+          "#747376",
+          "#AEADB1",
+          "#F1F0F5",
+          "#F5F4F8",
+          "#F8F7FA",
+          "#FAFAFB",
+          "#FCFBFC"
+        ]
+      },
+      "texte-doux": {
+        "role": "neutral",
+        "displayName": "Texte doux",
+        "canonical": "#D3D1DC",
+        "tonalRamp": [
+          "#363638",
+          "#65646A",
+          "#98979F",
+          "#D3D1DC",
+          "#E0DEE6",
+          "#E9E8EE",
+          "#F1F0F4",
+          "#F5F5F7"
+        ]
+      },
+      "texte-discret": {
+        "role": "neutral",
+        "displayName": "Texte discret",
+        "canonical": "#A3A1B0",
+        "tonalRamp": [
+          "#2A292D",
+          "#4E4D54",
+          "#76747F",
+          "#A3A1B0",
+          "#BEBDC7",
+          "#D2D1D8",
+          "#E2E1E6",
+          "#EBEBEE"
+        ]
+      },
+      "texte-eteint": {
+        "role": "neutral",
+        "displayName": "Texte éteint",
+        "canonical": "#6E6C7A",
+        "tonalRamp": [
+          "#1C1B1F",
+          "#35343A",
+          "#4F4E58",
+          "#6E6C7A",
+          "#9998A1",
+          "#B8B7BE",
+          "#D1D0D5",
+          "#E0E0E3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Titres d’écran."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Titres de journée."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Compétitions, cartes, libellés de pari."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Aide et phrases sociales."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Métadonnées et pastilles."
+      },
+      "cote": {
+        "displayName": "Cote",
+        "purpose": "Chiffres des cotes."
+      },
+      "logo": {
+        "displayName": "Logo",
+        "purpose": "OVER + TIME encadré, italique 800."
+      }
+    },
+    "shadows": [
+      {
+        "name": "lueur-selection",
+        "value": "0 0 18px #FF4FD859",
+        "purpose": "Autour d’un élément choisi, et seulement lui."
+      },
+      {
+        "name": "coupon-flottant",
+        "value": "0 12px 32px rgba(0,0,0,0.55)",
+        "purpose": "Le coupon au-dessus de la navigation."
+      }
+    ],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "iphone",
+        "value": "390px"
+      }
+    ],
+    "background": "radial-gradient(110% 50% at 50% 0%, rgba(255,79,216,0.17), transparent 70%), radial-gradient(90% 20% at 50% 88%, rgba(130,100,255,0.30), transparent 72%), #0C0C12"
+  },
+  "components": [
+    {
+      "name": "Bouton Parier",
+      "kind": "button",
+      "refersTo": "bouton-parier",
+      "description": "Le seul bouton plein magenta : l’action de parier.",
+      "html": "<button class=\"ds-btn-parier\">Parier 50 noxus</button>",
+      "css": ".ds-btn-parier { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; min-height: 54px; padding: 0 22px; border: none; border-radius: 14px; background: #FF4FD8; color: #0C0C12; font-weight: 700; font-size: 17px; cursor: pointer; } .ds-btn-parier:hover { filter: brightness(1.06); } .ds-btn-parier:focus-visible { outline: 2px solid #F1F0F5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton secondaire",
+      "kind": "button",
+      "refersTo": "bouton-secondaire",
+      "description": "Action de suite, en blanc (Continuer, Voir 21 matchs).",
+      "html": "<button class=\"ds-btn-sec\">Voir 21 matchs</button>",
+      "css": ".ds-btn-sec { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; min-height: 50px; padding: 0 22px; border: none; border-radius: 14px; background: #F1F0F5; color: #0C0C12; font-weight: 700; font-size: 16px; cursor: pointer; } .ds-btn-sec:focus-visible { outline: 2px solid #F1F0F5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Duel de cotes",
+      "kind": "custom",
+      "refersTo": "cote-libre",
+      "description": "Signature : deux cotes inclinées en miroir autour du VS ; la cote B est choisie.",
+      "html": "<div class=\"ds-duel\"><button class=\"ds-cote ds-cote-a\" aria-pressed=\"false\"><span>Corbeaux de Lille</span><b>1,61</b></button><span class=\"ds-vs\">VS</span><button class=\"ds-cote ds-cote-b ds-choisie\" aria-pressed=\"true\"><b>2,63</b><span>Lynx Rouges</span></button></div>",
+      "css": ".ds-duel { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: grid; grid-template-columns: 1fr 30px 1fr; align-items: center; width: 340px; padding: 10px; background: #1B1A22; border-radius: 16px; } .ds-vs { text-align: center; font-size: 13px; font-weight: 700; font-style: italic; color: #8D8A9B; } .ds-cote { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 52px; padding: 0 10px; border-radius: 7px; color: #F1F0F5; font-size: 13px; cursor: pointer; } .ds-cote b { font-size: 17px; font-weight: 600; } .ds-cote-a { transform: skewX(10deg); border: 1px solid #C6FF4D59; border-left: 3px solid #C6FF4D; background: linear-gradient(90deg, #C6FF4D4D, #C6FF4D12); } .ds-cote-b { transform: skewX(-10deg); border: 1px solid #C6FF4D59; border-right: 3px solid #C6FF4D; background: linear-gradient(270deg, #C6FF4D4D, #C6FF4D12); } .ds-cote-b.ds-choisie { border: 1px solid #FF4FD8A6; border-right: 4px solid #FF4FD8; background: linear-gradient(270deg, #FF4FD8B3, #FF4FD840); color: #FFFFFF; box-shadow: 0 0 18px #FF4FD859; } .ds-cote:focus-visible { outline: 2px solid #F1F0F5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Contrôle segmenté",
+      "kind": "nav",
+      "refersTo": "onglet-actif",
+      "description": "Liste, Semaine, Mois.",
+      "html": "<div class=\"ds-seg\" role=\"group\"><button aria-pressed=\"true\" class=\"on\">Liste</button><button aria-pressed=\"false\">Semaine</button><button aria-pressed=\"false\">Mois</button></div>",
+      "css": ".ds-seg { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: grid; grid-template-columns: repeat(3, 1fr); width: 300px; padding: 3px; border-radius: 14px; background: #15141B; border: 1px solid #2A2833; } .ds-seg button { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; min-height: 40px; border: none; border-radius: 11px; background: transparent; color: #A3A1B0; font-weight: 600; font-size: 14px; cursor: pointer; } .ds-seg button.on { background: #2A2833; color: #F1F0F5; } .ds-seg button:hover { color: #F1F0F5; }"
+    },
+    {
+      "name": "Pastille de fermeture",
+      "kind": "chip",
+      "refersTo": "pastille-fermeture",
+      "description": "Urgence : le match ferme dans moins d’une heure.",
+      "html": "<span class=\"ds-ferme\">ferme dans 40 min</span>",
+      "css": ".ds-ferme { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: inline-block; padding: 2px 8px; border-radius: 8px; background: #FFB5471F; color: #FFB547; font-size: 12px; font-weight: 600; }"
+    },
+    {
+      "name": "Puce de filtre",
+      "kind": "chip",
+      "refersTo": "bouton-discret",
+      "description": "Jeu filtré : bordure et coche magenta.",
+      "html": "<button class=\"ds-puce on\" aria-pressed=\"true\">League of Legends<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\"><path d=\"M5 12.5l4.5 4.5L19 7.5\" fill=\"none\" stroke=\"#FF4FD8\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-puce { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; width: 200px; padding: 0 12px; border-radius: 14px; background: #1B1A22; border: 1px solid #2A2833; color: #F1F0F5; font-weight: 600; font-size: 14px; cursor: pointer; } .ds-puce.on { background: #2A2833; border-color: #FF4FD8; }"
+    },
+    {
+      "name": "Barre de navigation",
+      "kind": "nav",
+      "refersTo": "onglet-actif",
+      "description": "Navigation basse, actif en blanc sur pastille.",
+      "html": "<nav class=\"ds-nav\"><a class=\"on\" href=\"#\"><i></i>Matchs</a><a href=\"#\"><i></i>Mes paris</a><a href=\"#\"><i></i>Classement</a><a href=\"#\"><i></i>Profil</a></nav>",
+      "css": ".ds-nav { font-family: Rubik, -apple-system, 'Segoe UI', sans-serif; display: grid; grid-template-columns: repeat(4, 1fr); width: 390px; padding: 6px 4px 10px; background: #15141B; border-top: 1px solid #2A2833; } .ds-nav a { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #A3A1B0; text-decoration: none; } .ds-nav i { display: block; width: 54px; height: 28px; border-radius: 14px; } .ds-nav a.on { color: #F1F0F5; } .ds-nav a.on i { background: #2A2833; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "L'Arène de poche",
+    "overview": "OverTime est un plateau e-sport qui tient dans la main. On y vient avant un match ou entre deux matchs, pour parier en quelques secondes, voir ce que les amis ont joué et se situer au classement. L'écran est un outil de travail (mode Operate) avec une signature de vitrine : la carte du prochain match garde un grand face-à-face, tout le reste est une liste compacte et dense.\n\nLe duel est l'image centrale. Deux cotes inclinées en miroir encadrent un VS, comme deux équipes qui se font face sur une scène. Autour, la nuit de l'arène : un fond presque noir, deux lueurs fixes (magenta en haut, violet en bas, comme les projecteurs et la salle) et des surfaces sombres empilées en couches. La lumière est dosée : une seule chose brille vraiment, ce que la personne a choisi.\n\nLe ressenti est celui d'un duel premium : peu d'éléments, des finitions soignées, une énergie e-sport sans décor de casino. L'illustration de référence est la planche « Étoile polaire · L'Arène de poche » du canevas de DA (finale M8 contre KC sur l'écran géant, téléphone ouvert sur OverTime au premier plan).",
+    "keyCharacteristics": [
+      "Fond Nuit de l'arène avec deux lueurs fixes, jamais sur les composants.",
+      "Cotes inclinées en miroir autour d'un VS : la signature visuelle.",
+      "Le magenta veut dire « choisi » ou « parier », rien d'autre.",
+      "Surfaces sombres en couches plutôt qu'ombres portées.",
+      "Une seule famille, Rubik ; l'italique gras est réservé au logo et au VS."
+    ],
+    "rules": [
+      {
+        "name": "The Une Lueur, Un Sens Rule",
+        "body": "Le magenta plein ou en dégradé lumineux ne sert qu'à deux choses : ce que la personne a choisi, et l'action de parier. Un VS, un onglet actif, un lien ou un badge de filtre ne sont jamais magenta : ils passent en blanc ou en gris.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lueurs Fixes Rule",
+        "body": "Le fond porte deux lueurs radiales et rien d'autre : magenta à 17 % en haut (ellipse 110 % × 50 %), violet à 30 % au-dessus des onglets (ellipse 90 % × 20 %, centrée à 88 %). On ne les atténue pas et on n'en ajoute pas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Vert-Libre, Magenta-Choisi Rule",
+        "body": "Une cote change de couleur, jamais de forme : même inclinaison, même dégradé, même liseré, en vert quand elle est libre et en magenta (plus dense, liseré plus épais, lueur) quand elle est choisie.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pas de Capitales Rule",
+        "body": "Aucun libellé en majuscules espacées dans l'interface. Les majuscules sont réservées au logo et à l'écran géant de l'illustration.",
+        "section": "typography"
+      },
+      {
+        "name": "The Une Vedette Par Jour Rule",
+        "body": "Une seule grande carte par journée, celle du prochain duel à commencer. Tout le reste est compact.",
+        "section": "layout"
+      },
+      {
+        "name": "The Seule la Sélection Brille Rule",
+        "body": "Une lueur autour d'un élément veut dire « tu l'as choisi ». Aucune autre lueur sur les composants.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do réserver le Magenta Arène à la sélection et au bouton Parier (The Une Lueur, Un Sens Rule).",
+      "Do garder les deux lueurs du fond à leurs valeurs exactes (17 % magenta en haut, 30 % violet en bas).",
+      "Do afficher sur chaque coupon la mise, le gain possible arrondi à l'inférieur et l'heure de fermeture.",
+      "Do écrire les cotes avec une virgule (1,61) et les nombres avec une espace fine (1 240 noxus).",
+      "Do montrer l'activité des amis (avatars, phrase sociale) sur les matchs : la rivalité est le moteur du produit.",
+      "Do garder des cibles tactiles d'au moins 44px et un contraste d'au moins 4,5:1, y compris sur le magenta."
+    ],
+    "donts": [
+      "Don't colorer le VS, un onglet actif, un lien ou un badge en magenta.",
+      "Don't atténuer ou multiplier les lueurs du fond, ni ajouter de halo décoratif à un composant non choisi.",
+      "Don't utiliser de majuscules espacées pour les libellés, ni de police à chasse fixe.",
+      "Don't reproduire les logos officiels d'équipes, de jeux ou de compétitions : pictogrammes maison, les vrais logos viendront de la source de données sous licence.",
+      "Don't empiler plus de deux niveaux de cartes, ni donner le même arrondi à tout.",
+      "Don't emprunter les codes du casino (jetons, rouleaux, pluie de pièces) : OverTime parle de duel, pas de jackpot."
+    ]
+  }
+}
