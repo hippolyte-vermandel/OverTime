@@ -5,7 +5,7 @@ import { requete } from './db.js';
  * et ses cotes, du plus proche au plus lointain.
  * Les jeux en lobby (Fortnite, Warzone, TFT) auront leur propre affichage.
  */
-export async function prochainsMatchs(limite = 30) {
+export async function prochainsMatchs(limite = 200) {
 	const lignes = await requete(
 		`
 		SELECT s.id, s.date_prevue, s.best_of, s.phase,

@@ -15,28 +15,29 @@
 
 <style>
 	section {
-		margin-top: 40px;
+		margin: 40px 12px 0;
 		padding: 28px 20px;
 		text-align: center;
-		background: var(--surface);
-		border: 1px solid var(--bord);
-		border-radius: var(--rayon);
+		background: var(--surface-gradin);
+		border: 1px solid var(--surface-active);
+		border-radius: var(--r-section);
 	}
 	h1 {
 		margin: 0 0 8px;
-		font-size: 1.3rem;
+		font-size: 22px;
+		font-weight: 700;
 	}
 	p {
 		margin: 0 0 16px;
-		color: var(--texte-2);
+		color: var(--texte-discret);
 	}
 	.etiquette {
 		display: inline-block;
 		padding: 4px 12px;
-		border-radius: 999px;
-		background: color-mix(in srgb, var(--accent) 18%, transparent);
-		color: var(--accent-fort);
-		font-size: 0.8rem;
+		border-radius: var(--r-pastille);
+		background: var(--surface-active);
+		color: var(--texte-doux);
+		font-size: 13px;
 		font-weight: 700;
 	}
 </style>

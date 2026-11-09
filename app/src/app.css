@@ -1,31 +1,37 @@
 /* ===========================================================================
-   OverTime - direction artistique
-   Sombre et sobre ; la couleur est réservée à ce qui compte :
-   les cotes, les actions, les gains et pertes, l'identité des jeux.
+   OverTime - « L'Arène de poche »
+   Jetons de la charte (voir DESIGN.md à la racine du dépôt).
+   Règle d'or : le magenta ne sert qu'à ce que l'on choisit et au bouton Parier.
    =========================================================================== */
+
+@import '@fontsource-variable/rubik/wght.css';
+@import '@fontsource-variable/rubik/wght-italic.css';
 
 :root {
 	color-scheme: dark;
 
-	/* Fonds, du plus profond au plus proche */
-	--fond: #0b0e14;
-	--surface: #141924;
-	--surface-2: #1c2331;
-	--bord: #263042;
+	/* Couleurs nommées */
+	--magenta-arene: #ff4fd8;
+	--vert-cote: #c6ff4d;
+	--violet-gradin: #8264ff;
+	--ambre-fermeture: #ffb547;
+	--rouge-perte: #ff9494;
+	--menthe-victoire: #8fe3c0;
 
-	/* Textes (contrastes vérifiés sur --surface : >= 4,5:1) */
-	--texte: #e8ecf4;
-	--texte-2: #9aa4b8;
+	/* Nuit de l'arène et surfaces, du plus profond au plus proche */
+	--nuit-arene: #0c0c12;
+	--surface-gradin: #15141b;
+	--surface-carte: #1b1a22;
+	--surface-active: #2a2833;
+	--bordure-forte: #383542;
 
-	/* Couleurs d'action */
-	--accent: #8b7bff; /* violet OverTime : boutons, onglet actif */
-	--accent-fort: #a99dff;
-	--cote: #2dd4bf; /* turquoise : les cotes */
-	--gain: #34d399;
-	--perte: #f87171;
-	--alerte: #fbbf24;
+	/* Textes */
+	--texte-principal: #f1f0f5;
+	--texte-doux: #d3d1dc;
+	--texte-discret: #a3a1b0;
+	--texte-eteint: #6e6c7a;
 
-	/* Identité discrète de chaque jeu (petites pastilles) */
+	/* Identité discrète de chaque jeu (pictogrammes, points du calendrier) */
 	--jeu-lol: #c8a75a;
 	--jeu-valorant: #ff4655;
 	--jeu-fortnite: #b07cff;
@@ -35,9 +41,19 @@
 	--jeu-warzone: #7cb342;
 	--jeu-2xko: #ff7a45;
 
-	--rayon: 14px;
-	--police: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
-	--chiffres: 'SF Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+	/* Arrondis : ils grandissent avec la taille du conteneur */
+	--r-cote: 7px;
+	--r-pastille: 8px;
+	--r-bouton: 12px;
+	--r-controle: 14px;
+	--r-carte: 16px;
+	--r-section: 22px;
+	--r-feuille: 26px;
+
+	/* Lueur réservée à ce qui est choisi */
+	--lueur-choix: 0 0 18px #ff4fd859;
+
+	--police: 'Rubik Variable', -apple-system, 'Segoe UI', sans-serif;
 }
 
 * {
@@ -47,8 +63,8 @@
 html,
 body {
 	margin: 0;
-	background: var(--fond);
-	color: var(--texte);
+	min-height: 100%;
+	color: var(--texte-principal);
 	font-family: var(--police);
 	font-size: 16px;
 	line-height: 1.4;
@@ -56,13 +72,35 @@ body {
 	-webkit-tap-highlight-color: transparent;
 }
 
+/* Les deux lueurs fixes de l'arène : magenta en haut, violet au-dessus des onglets.
+   On ne les atténue pas et on n'en ajoute pas. */
+html {
+	background:
+		radial-gradient(110% 50% at 50% 0%, rgb(255 79 216 / 0.17), transparent 70%),
+		radial-gradient(90% 20% at 50% 88%, rgb(130 100 255 / 0.3), transparent 72%),
+		var(--nuit-arene);
+	background-attachment: fixed;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
 a {
-	color: var(--accent-fort);
+	color: var(--texte-principal);
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
 }
 
 /* Focus toujours visible pour la navigation au clavier */
 :focus-visible {
-	outline: 2px solid var(--accent-fort);
+	outline: 2px solid var(--texte-principal);
 	outline-offset: 2px;
 }
 
