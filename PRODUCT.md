@@ -43,6 +43,7 @@ Une ligue privée et fermée, centrée sur l'e-sport (région EMEA et compétiti
 - Classement unique par ligue, tous jeux confondus, au rendement (gains divisés par mises).
 - Paris fermés à l'heure de début du match ; gains arrondis à l'inférieur.
 - Combinés : une sélection annulée divise le gain par deux ; si cette moitié est inférieure à la mise, la mise est remboursée ; tout annulé, mise remboursée.
+- Une seule sélection par match dans un coupon : en choisir une autre remplace la précédente. Les marchés d'un même match sont liés (un score de 3-1 implique la victoire), les combiner fausserait la cote.
 - Cotes calculées avant le match (Elo des équipes, correctif léger des confrontations directes récentes si les effectifs sont comparables), jamais en direct.
 - Tout mouvement de noxus passe par des fonctions de la base qui vérifient et écrivent en une seule opération.
 - Undecided : source de données définitive (dépend de la réponse de Liquipedia) ; affichage précis des paris sur statistiques.
