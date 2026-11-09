@@ -95,6 +95,9 @@ psql -U postgres -c "CREATE DATABASE overtime OWNER overtime;"
 psql -U overtime -d overtime -f db/schema.sql
 psql -U overtime -d overtime -f db/fonctions.sql
 psql -U overtime -d overtime -f db/demo.sql
+
+# Crée la ligue de tes amis et son code d'invitation (à communiquer au groupe)
+psql -U overtime -d overtime -c "SELECT creer_ligue('Les Potes du Lundi', 'OVT-7KQ2');"
 ```
 
 `psql` demande à chaque fois le mot de passe de l'utilisateur indiqué après `-U`.
@@ -120,14 +123,24 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Dans le fichier qui s'ouvre, remplace `CHANGE_MOI` par le mot de passe de `overtime`, enregistre, ferme. Puis :
+Dans le fichier qui s'ouvre :
+
+- remplace `CHANGE_MOI` par le mot de passe de `overtime` ;
+- remplace la valeur de `BETTER_AUTH_SECRET` par une longue clé au hasard, obtenue avec
+  `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` ;
+- en développement, mets `BETTER_AUTH_URL=http://localhost:5173`.
+
+Enregistre, ferme. Puis :
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Ouvre **http://localhost:5173** dans ton navigateur : les matchs de démonstration s'affichent.
+Ouvre **http://localhost:5173** : tu arrives sur la page de connexion. Choisis
+« Créer un compte », entre le code d'invitation de la ligue (`OVT-7KQ2` dans l'exemple),
+un pseudo et un mot de passe. **La première personne qui rejoint une ligue en devient
+l'administrateur.** Les matchs de démonstration s'affichent ensuite, et tu peux parier.
 Les modifications du code s'affichent en direct. `Ctrl + C` arrête le serveur.
 
 ### 5. Essayer sur ton téléphone (même Wi-Fi)
@@ -147,11 +160,15 @@ l'iPhone. Si Windows demande d'autoriser Node.js dans le pare-feu, accepte pour 
 ### 6. Version « production » (pour le PC serveur)
 
 ```powershell
+# Adresse à laquelle tes amis ouvriront l'application (protection des formulaires)
+$env:ORIGIN = "http://192.168.1.42:3000"
 npm run build
 node --env-file=.env build
 ```
 
-L'application tourne alors sur **http://localhost:3000**, sans le mode développement.
+Mets la même adresse dans `BETTER_AUTH_URL` du fichier `.env`. L'application tourne alors
+sur le port 3000, sans le mode développement. Derrière le tunnel HTTPS, l'adresse sera celle
+du tunnel.
 
 ---
 

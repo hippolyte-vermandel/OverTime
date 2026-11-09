@@ -28,9 +28,7 @@ INSERT INTO joueur (pseudo) VALUES ('Aster');
 INSERT INTO serie (competition_id, date_prevue, best_of)
 VALUES (1, now() + interval '1 hour', 5);
 
-INSERT INTO utilisateur (pseudo, email, mot_de_passe) VALUES
-  ('seb', 's@x.fr', 'h'), ('lea', 'l@x.fr', 'h'), ('tom', 't@x.fr', 'h'),
-  ('intrus', 'i@x.fr', 'h');
+INSERT INTO utilisateur (pseudo) VALUES ('seb'), ('lea'), ('tom'), ('intrus');
 INSERT INTO ligue (nom, code_invitation, createur_id) VALUES ('Les potes', 'NOX-1', 1);
 INSERT INTO ligue (nom, code_invitation, createur_id, combines_permis)
 VALUES ('Sans combinés', 'NOX-2', 1, false);

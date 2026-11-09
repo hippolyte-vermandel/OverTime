@@ -13,7 +13,12 @@ export default defineConfig({
 
 			// adapter-node : l'application tourne comme un serveur Node.js classique,
 			// sur votre PC (Windows aujourd'hui, Linux plus tard).
-			adapter: adapter()
+			adapter: adapter(),
+
+			// Adresse publique de l'application (ex. http://192.168.1.20:3000), lue au moment du build.
+			// Elle sert à la protection contre les envois de formulaires depuis un autre site.
+			// Derrière un proxy HTTPS (Caddy...), on peut la laisser vide et régler PROTOCOL_HEADER.
+			paths: { origin: process.env.ORIGIN || undefined }
 		})
 	]
 });

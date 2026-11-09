@@ -143,7 +143,17 @@
 	{/each}
 </div>
 
-<Coupon {lignes} {maintenant} solde={null} onretirer={(id) => selection.delete(id)} onvider={() => selection.clear()} />
+{#if data.joueur?.ligue}
+	<Coupon
+		{lignes}
+		{maintenant}
+		solde={data.joueur.solde}
+		miseMin={data.joueur.ligue.mise_min}
+		miseMax={data.joueur.ligue.mise_max}
+		onretirer={(id) => selection.delete(id)}
+		onvider={() => selection.clear()}
+	/>
+{/if}
 
 {#if filtreOuvert}
 	<FiltreJeux

@@ -80,8 +80,7 @@ SELECT n, 'score_exact', 'Score exact', date_trunc('hour', now()) + dans
   FROM _a_venir WHERE bo = 5;
 
 -- Une ligue de démonstration
-INSERT INTO utilisateur (pseudo, email, mot_de_passe) VALUES
-  ('demo', 'demo@exemple.fr', 'pas-un-vrai-hachage');
+INSERT INTO utilisateur (pseudo) VALUES ('demo');
 INSERT INTO ligue (nom, code_invitation, createur_id) VALUES ('Ligue démo', 'DEMO-0000', 1);
 SELECT rejoindre_ligue(1, 'DEMO-0000');
 UPDATE membre_ligue SET role = 'admin';
