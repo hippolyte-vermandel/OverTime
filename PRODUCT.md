@@ -40,8 +40,9 @@ Une ligue privée et fermée, centrée sur l'e-sport (région EMEA et compétiti
 ## Capabilities and Constraints
 
 - Économie : 1000 noxus au début de chaque saison, recharge de 150 par semaine, mises de 10 à 500 par pari. Réglable par ligue.
-- Classement unique par ligue, tous jeux confondus, au rendement (gains divisés par mises).
+- Classement unique par ligue, tous jeux confondus, au rendement (noxus récupérés divisés par noxus misés, sur les paris réglés). Il faut au moins 10 paris réglés dans la saison pour être classé.
 - Paris fermés à l'heure de début du match ; gains arrondis à l'inférieur.
+- Match annulé : pari simple remboursé. Un match reporté de plus de 48 heures est traité comme annulé.
 - Combinés : une sélection annulée divise le gain par deux ; si cette moitié est inférieure à la mise, la mise est remboursée ; tout annulé, mise remboursée.
 - Une seule sélection par match dans un coupon : en choisir une autre remplace la précédente. Les marchés d'un même match sont liés (un score de 3-1 implique la victoire), les combiner fausserait la cote.
 - Cotes calculées avant le match (Elo des équipes, correctif léger des confrontations directes récentes si les effectifs sont comparables), jamais en direct.
