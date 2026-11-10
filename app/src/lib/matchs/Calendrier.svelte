@@ -1,13 +1,15 @@
 <script>
+	import { untrack } from 'svelte';
 	// Vue Semaine (bandeau de 7 jours) ou Mois (grille). Le jour choisi est en magenta, rien d'autre.
 	import { decalerJour, indiceSemaine, lundiDe, jourCourt, nomJour, nomMois } from '#lib/format.js';
 
 	/** @type {{ vue: 'semaine' | 'mois', jour: string, aujourdhui: string, jeuxDuJour: (cle: string) => string[], nbDuJour: (cle: string) => number, onchoisir: (cle: string) => void }} */
 	let { vue, jour, aujourdhui, jeuxDuJour, nbDuJour, onchoisir } = $props();
 
-	// Semaine affichée (lundi) et mois affiché (1er du mois), réglables avec les flèches
-	let lundi = $state(lundiDe(jour));
-	let premier = $state(jour.slice(0, 8) + '01');
+	// Semaine affichée (lundi) et mois affiché (1er du mois), partant du jour choisi à l'ouverture,
+	// puis réglables avec les flèches indépendamment du jour choisi
+	let lundi = $state(untrack(() => lundiDe(jour)));
+	let premier = $state(untrack(() => jour.slice(0, 8) + '01'));
 
 	const semaine = $derived([0, 1, 2, 3, 4, 5, 6].map((i) => decalerJour(lundi, i)));
 	const libelleSemaine = $derived.by(() => {
