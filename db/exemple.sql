@@ -103,7 +103,7 @@ INSERT INTO issue (marche_id, libelle, probabilite, cote) VALUES
   (3, 'moins', 0.5200, 1.92);
 
 SELECT placer_pari(2, 1, 100, ARRAY[1]);     -- Léa : simple sur les Corbeaux
-SELECT placer_pari(3, 1,  50, ARRAY[2, 3]);  -- Tom : combiné Lynx + map 5 jouée
+SELECT placer_pari(3, 1,  50, ARRAY[3]);     -- Tom : la map 5 sera jouée
 SELECT placer_pari(1, 1,  80, ARRAY[5]);     -- Seb : plus de 4,5 kills pour Aster
 
 -- Le match commence (on simule l'heure de début), puis l'admin règle

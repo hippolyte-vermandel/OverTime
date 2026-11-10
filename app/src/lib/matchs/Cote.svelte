@@ -1,11 +1,18 @@
 <script>
 	// Une cote de duel : inclinée vers le VS, en miroir de celle d'en face.
 	// Vert quand elle est libre, magenta (dégradé dense, liseré, lueur) quand elle est choisie.
+	// Match déjà parié : la cote prise reste magenta, un peu plus marquée (pariee),
+	// l'autre perd son contour et son fond pour ne garder que le chiffre (effacee).
 	import { formatCote } from '#lib/format.js';
 	import Blason from './Blason.svelte';
 
-	/** @type {{ equipe: any, cote: number, cote_a: boolean, choisie: boolean, grand?: boolean, desactivee?: boolean, onclick: () => void }} */
-	let { equipe, cote, cote_a, choisie, grand = false, desactivee = false, onclick } = $props();
+	/** @type {{ equipe: any, cote: number, cote_a: boolean, choisie: boolean, pariee?: boolean, effacee?: boolean, grand?: boolean, desactivee?: boolean, onclick: () => void }} */
+	let { equipe, cote, cote_a, choisie, pariee = false, effacee = false, grand = false, desactivee = false, onclick } = $props();
+	const libelle = $derived(
+		pariee ? `Ton pari : ${equipe.nom}, cote ${formatCote(cote)}`
+		: effacee ? `${equipe.nom}, cote ${formatCote(cote)}, tu as déjà parié sur ce match`
+		: `Parier sur ${equipe.nom}, cote ${formatCote(cote)}`
+	);
 </script>
 
 <button
@@ -13,10 +20,12 @@
 	class:cote-a={cote_a}
 	class:cote-b={!cote_a}
 	class:grand
-	class:choisie
-	aria-pressed={choisie}
-	aria-label="Parier sur {equipe.nom}, cote {formatCote(cote)}"
-	disabled={desactivee}
+	class:choisie={choisie || pariee}
+	class:pariee
+	class:effacee
+	aria-pressed={pariee || effacee ? undefined : choisie}
+	aria-label={libelle}
+	disabled={desactivee || pariee || effacee}
 	{onclick}
 >
 	<span class="contenu">
@@ -77,6 +86,31 @@
 	.cote:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
+	}
+
+	/* Match déjà parié : la cote prise ressort un peu plus que la simple sélection */
+	.cote.pariee {
+		box-shadow: 0 0 26px #ff4fd88c;
+	}
+	.cote-a.pariee {
+		background: linear-gradient(90deg, #ff4fd8d9, #ff4fd859);
+	}
+	.cote-b.pariee {
+		background: linear-gradient(270deg, #ff4fd8d9, #ff4fd859);
+	}
+	.pariee .chiffre {
+		font-weight: 800;
+	}
+	/* L'autre cote du match parié : plus de contour ni de fond, juste la cote */
+	.cote.effacee {
+		border-color: transparent;
+		background: none;
+		color: var(--texte-discret);
+	}
+	.cote.pariee:disabled,
+	.cote.effacee:disabled {
+		opacity: 1;
+		cursor: default;
 	}
 
 	/* Le contenu est contre-incliné pour rester droit */

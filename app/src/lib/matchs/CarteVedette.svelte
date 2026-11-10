@@ -5,8 +5,11 @@
 	import PictoJeu from './PictoJeu.svelte';
 	import { formatHeure, fermeture } from '#lib/format.js';
 
-	/** @type {{ match: any, choix: number | null, maintenant: Date, onchoisir: (match: any, issue: any) => void }} */
-	let { match, choix, maintenant, onchoisir } = $props();
+	/** @type {{ match: any, choix: number | null, pariees?: number[] | null, maintenant: Date, onchoisir: (match: any, issue: any) => void }} */
+	let { match, choix, pariees = null, maintenant, onchoisir } = $props();
+	// Déjà parié sur ce match : ses cotes sont figées (un seul pari par match)
+	const pariee = (issue) => !!pariees?.includes(issue.id);
+	const effacee = (issue) => !!pariees && !pariees.includes(issue.id);
 
 	const [a, b] = $derived(match.equipes);
 	const ferme = $derived(fermeture(match.date_prevue, maintenant));
@@ -34,9 +37,9 @@
 
 	{#if a.issue && b.issue}
 		<div class="duel">
-			<Cote grand equipe={a} cote={a.issue.cote} cote_a choisie={choix === a.issue.id} desactivee={!match.marche_ouvert} onclick={() => onchoisir(match, a.issue)} />
+			<Cote grand equipe={a} cote={a.issue.cote} cote_a choisie={choix === a.issue.id} pariee={pariee(a.issue)} effacee={effacee(a.issue)} desactivee={!match.marche_ouvert} onclick={() => onchoisir(match, a.issue)} />
 			<span class="vs" aria-hidden="true">VS</span>
-			<Cote grand equipe={b} cote={b.issue.cote} cote_a={false} choisie={choix === b.issue.id} desactivee={!match.marche_ouvert} onclick={() => onchoisir(match, b.issue)} />
+			<Cote grand equipe={b} cote={b.issue.cote} cote_a={false} choisie={choix === b.issue.id} pariee={pariee(b.issue)} effacee={effacee(b.issue)} desactivee={!match.marche_ouvert} onclick={() => onchoisir(match, b.issue)} />
 		</div>
 	{/if}
 
