@@ -376,10 +376,29 @@ BEGIN
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Code d''invitation inconnu';
     END IF;
-    INSERT INTO membre_ligue (ligue_id, utilisateur_id) VALUES (l.id, p_utilisateur);
+    -- Le premier membre d'une ligue en devient l'administrateur
+    INSERT INTO membre_ligue (ligue_id, utilisateur_id, role)
+    VALUES (l.id, p_utilisateur,
+            CASE WHEN EXISTS (SELECT 1 FROM membre_ligue WHERE ligue_id = l.id)
+                 THEN 'membre' ELSE 'admin' END);
     PERFORM assurer_depart(l.id, p_utilisateur, saison_courante(l.id));
     RETURN l.id;
 END;
 $$ LANGUAGE plpgsql;
 
 COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Créer une ligue (par l'administrateur du serveur, avant les inscriptions).
+-- Exemple : SELECT creer_ligue('Les Potes du Lundi', 'OVT-7KQ2');
+-- Le premier ami qui s'inscrit avec ce code en devient l'administrateur.
+-- ---------------------------------------------------------------------------
+CREATE FUNCTION creer_ligue(p_nom text, p_code text) RETURNS int AS $$
+DECLARE
+    v_ligue int;
+BEGIN
+    INSERT INTO ligue (nom, code_invitation) VALUES (p_nom, upper(p_code))
+    RETURNING id INTO v_ligue;
+    RETURN v_ligue;
+END;
+$$ LANGUAGE plpgsql;

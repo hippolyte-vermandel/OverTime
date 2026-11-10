@@ -3,7 +3,9 @@
 	import { page } from '$app/state';
 	import favicon from '#lib/assets/favicon.svg';
 
-	let { children } = $props();
+	import { formatNombre } from '#lib/format.js';
+
+	let { data, children } = $props();
 
 	// Barre d'onglets en bas d'écran, comme une application iPhone
 	const onglets = [
@@ -28,17 +30,21 @@
 </svelte:head>
 
 <div class="app">
-	<header class="entete">
-		<span class="logo" aria-label="OverTime">Over<span>Time</span></span>
-		<!-- Le solde viendra du compte de l'utilisateur (comptes en préparation) -->
-		<span class="solde" aria-label="Solde : bientôt disponible">—<span class="unite">noxus</span></span>
-	</header>
+	{#if data.joueur}
+		<header class="entete">
+			<span class="logo" aria-label="OverTime">Over<span>Time</span></span>
+			{#if data.joueur.ligue}
+				<span class="solde" aria-label="Solde : {formatNombre(data.joueur.solde)} noxus">{formatNombre(data.joueur.solde)}<span class="unite">noxus</span></span>
+			{/if}
+		</header>
+	{/if}
 
-	<main>
+	<main class:sans-nav={!data.joueur}>
 		{@render children()}
 	</main>
 </div>
 
+{#if data.joueur}
 <nav class="onglets" aria-label="Navigation principale">
 	{#each onglets as o (o.href)}
 		<a href={o.href} aria-current={actif(o.href) ? 'page' : undefined}>
@@ -47,6 +53,7 @@
 		</a>
 	{/each}
 </nav>
+{/if}
 
 <style>
 	.app {
@@ -98,6 +105,9 @@
 
 	main {
 		padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
+	}
+	main.sans-nav {
+		padding-bottom: env(safe-area-inset-bottom);
 	}
 
 	.onglets {

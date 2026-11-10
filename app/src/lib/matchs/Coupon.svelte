@@ -1,28 +1,32 @@
 <script>
 	// Le coupon : une barre flottante (« Miser ») puis une feuille pour régler la mise,
 	// voir le gain possible, l'heure de fermeture et parier.
+	import { invalidateAll } from '$app/navigation';
 	import { formatCote, formatNombre, formatHeure, nomJour, cleJour, fermeture } from '#lib/format.js';
 
 	/**
 	 * @type {{
 	 *   lignes: { match: any, issue: any, choix: string, contexte: string }[],
 	 *   maintenant: Date,
-	 *   solde: number | null,
+	 *   solde: number,
+	 *   miseMin: number,
+	 *   miseMax: number,
 	 *   onretirer: (matchId: number) => void,
 	 *   onvider: () => void
 	 * }}
 	 */
-	let { lignes, maintenant, solde, onretirer, onvider } = $props();
+	let { lignes, maintenant, solde, miseMin, miseMax, onretirer, onvider } = $props();
 
-	const MISE_MIN = 10;
-	const MISE_MAX = 500;
 	let ouvert = $state(false);
 	let mise = $state(50);
-	let message = $state('');
+	let erreur = $state('');
+	let envoi = $state(false);
+	/** @type {{ mise: number, cote: number, gain: number, nb: number } | null} */
+	let confirme = $state(null);
 
 	const cote = $derived(lignes.reduce((c, l) => c * Number(l.issue.cote), 1));
 	const gain = $derived(Math.floor(mise * cote));
-	const insuffisant = $derived(solde !== null && mise > solde);
+	const insuffisant = $derived(mise > solde);
 	const combine = $derived(lignes.length > 1);
 
 	// Le coupon ferme au coup d'envoi du premier match
@@ -36,23 +40,46 @@
 	});
 	const bientot = $derived(premier ? (fermeture(premier.date_prevue, maintenant)?.bientot ?? false) : false);
 
-	const regler = (v) => (mise = Math.min(MISE_MAX, Math.max(MISE_MIN, v)));
+	const regler = (v) => {
+		mise = Math.min(miseMax, Math.max(miseMin, v));
+		erreur = '';
+	};
 
-	function parier() {
-		if (insuffisant) return;
-		// Les comptes ne sont pas encore en place : aucun pari n'est enregistré pour l'instant.
-		message = 'Les comptes arrivent bientôt : ce pari n’a pas encore été enregistré.';
+	async function parier() {
+		if (insuffisant || envoi) return;
+		envoi = true;
+		erreur = '';
+		try {
+			const reponse = await fetch('/api/paris', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ mise, issues: lignes.map((l) => l.issue.id) })
+			});
+			const r = await reponse.json().catch(() => ({}));
+			if (!reponse.ok) {
+				erreur = r.erreur ?? 'Le pari n’a pas pu être enregistré. Réessaie dans un instant.';
+				return;
+			}
+			confirme = { mise, cote, gain, nb: lignes.length };
+			ouvert = false;
+			onvider();
+			await invalidateAll(); // met à jour le solde affiché
+		} catch {
+			erreur = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
+		} finally {
+			envoi = false;
+		}
 	}
 
 	$effect(() => {
 		if (lignes.length === 0) {
 			ouvert = false;
-			message = '';
+			erreur = '';
 		}
 	});
 </script>
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && (ouvert = false)} />
+<svelte:window onkeydown={(e) => e.key === 'Escape' && ((ouvert = false), (confirme = null))} />
 
 {#if lignes.length > 0 && !ouvert}
 	<div class="barre">
@@ -96,14 +123,14 @@
 				<button class="pas" aria-label="Ajouter 10 noxus" onclick={() => regler(mise + 10)}>+</button>
 			</div>
 			<div class="rapides" role="group" aria-label="Mises rapides">
-				{#each [10, 50, 100, 250] as v (v)}
+				{#each [10, 50, 100, 250].filter((v) => v >= miseMin && v <= miseMax) as v (v)}
 					<button aria-pressed={mise === v} onclick={() => regler(v)}>{v}</button>
 				{/each}
 			</div>
 
 			<div class="bilan">
 				<span>Gain possible</span><span class="gain">{formatNombre(gain)} noxus</span>
-				{#if solde !== null}<span class="sec">Solde après le pari</span><span class="sec droite">{formatNombre(Math.max(0, solde - mise))} noxus</span>{/if}
+				<span class="sec">Solde après le pari</span><span class="sec droite">{formatNombre(Math.max(0, solde - mise))} noxus</span>
 			</div>
 
 			<span class="fermeture" class:bientot>
@@ -113,11 +140,29 @@
 			{#if insuffisant}
 				<p class="alerte" role="alert">Solde insuffisant : il te reste {formatNombre(solde)} noxus. Baisse la mise pour parier.</p>
 			{/if}
-			{#if message}
-				<p class="info" role="status">{message}</p>
+			{#if erreur}
+				<p class="alerte" role="alert">{erreur}</p>
 			{/if}
 
-			<button class="parier" aria-disabled={insuffisant} onclick={parier}>Parier {formatNombre(mise)} noxus</button>
+			<button class="parier" aria-disabled={insuffisant || envoi} onclick={parier}>{envoi ? 'Envoi…' : `Parier ${formatNombre(mise)} noxus`}</button>
+		</div>
+	</div>
+{/if}
+
+{#if confirme}
+	<div class="voile">
+		<button class="fond" aria-label="Fermer" onclick={() => (confirme = null)}></button>
+		<div class="feuille confirmation" role="dialog" aria-modal="true" aria-labelledby="titre-confirme">
+			<span class="ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+			<h2 id="titre-confirme">Pari placé</h2>
+			<p>
+				{formatNombre(confirme.mise)} noxus {confirme.nb > 1 ? `sur un combiné de ${confirme.nb}, cote` : 'à la cote'} {formatCote(confirme.cote)}.
+				Gain possible : {formatNombre(confirme.gain)} noxus. Ton solde passe à {formatNombre(solde)} noxus.
+			</p>
+			<div class="actions">
+				<a class="secondaire" href="/paris">Voir mes paris</a>
+				<button class="principal" onclick={() => (confirme = null)}>Continuer</button>
+			</div>
 		</div>
 	</div>
 {/if}
@@ -359,21 +404,70 @@
 	.fermeture.bientot {
 		color: var(--ambre-fermeture);
 	}
-	.alerte,
-	.info {
+	.alerte {
 		margin: 0;
 		font-size: 14px;
 	}
 	.alerte {
 		color: var(--rouge-perte);
 	}
-	.info {
-		color: var(--texte-doux);
-	}
 	.parier {
 		min-height: 54px;
 		border-radius: var(--r-controle);
 		font-size: 17px;
+	}
+	.confirmation {
+		align-items: center;
+		gap: 12px;
+		padding-top: 24px;
+		text-align: center;
+	}
+	.confirmation p {
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.45;
+		color: var(--texte-doux);
+	}
+	.ok {
+		display: grid;
+		place-items: center;
+		width: 52px;
+		height: 52px;
+		border-radius: 50%;
+		background: #c6ff4d26;
+		color: var(--vert-cote);
+	}
+	.ok svg {
+		width: 26px;
+		height: 26px;
+		stroke-width: 2.4;
+	}
+	.actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px;
+		width: 100%;
+		margin-top: 6px;
+	}
+	.secondaire,
+	.principal {
+		display: grid;
+		place-items: center;
+		min-height: 50px;
+		border-radius: var(--r-controle);
+		font-size: 15px;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.secondaire {
+		border: 1px solid var(--bordure-forte);
+		color: var(--texte-principal);
+	}
+	.principal {
+		border: none;
+		background: var(--texte-principal);
+		color: var(--nuit-arene);
+		font-weight: 700;
 	}
 	.parier[aria-disabled='true'] {
 		background: var(--surface-active);

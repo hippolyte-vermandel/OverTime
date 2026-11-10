@@ -76,10 +76,7 @@ INSERT INTO stat_joueur (partie_id, joueur_id, participation_id, personnage,
   (1, 8, 2, 'Azir', 3, 4, 4, 19800);
 
 -- Les amis et leur ligue
-INSERT INTO utilisateur (pseudo, email, mot_de_passe) VALUES
-  ('seb',  'seb@exemple.fr',  '$argon2id$exemple'),
-  ('lea',  'lea@exemple.fr',  '$argon2id$exemple'),
-  ('tom',  'tom@exemple.fr',  '$argon2id$exemple');
+INSERT INTO utilisateur (pseudo) VALUES ('seb'), ('lea'), ('tom');
 
 INSERT INTO ligue (nom, code_invitation, createur_id) VALUES ('Les potes', 'NOX-4821', 1);
 

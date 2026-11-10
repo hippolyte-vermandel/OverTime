@@ -5,6 +5,7 @@
 --
 --  Le schéma est découpé en quatre blocs :
 --
+--   0. Les comptes (Better Auth)
 --   A. Le référentiel e-sport : jeux, compétitions, équipes, joueurs, contrats
 --   B. Les rencontres et leurs statistiques : séries, parties (maps), stats
 --   C. Les paris : marchés, issues, paris, ligues entre amis
@@ -18,6 +19,21 @@
 -- ===========================================================================
 
 BEGIN;
+
+-- ===========================================================================
+--  0. COMPTES (tables gérées par Better Auth, la bibliothèque d'authentification)
+--  Ne pas modifier à la main : elles suivent le format attendu par Better Auth.
+--  Les mots de passe sont hachés par Better Auth dans "account".password.
+--  Les noms entre guillemets ("user", "createdAt"...) sont ceux de Better Auth.
+-- ===========================================================================
+
+create table "user" ("id" text not null primary key, "name" text not null, "email" text not null unique, "emailVerified" boolean not null, "image" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null, "username" text unique, "displayUsername" text);
+create table "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user" ("id") on delete cascade);
+create table "account" ("id" text not null primary key, "accountId" text not null, "providerId" text not null, "userId" text not null references "user" ("id") on delete cascade, "accessToken" text, "refreshToken" text, "idToken" text, "accessTokenExpiresAt" timestamptz, "refreshTokenExpiresAt" timestamptz, "scope" text, "password" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null);
+create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
+create index "session_userId_idx" on "session" ("userId");
+create index "account_userId_idx" on "account" ("userId");
+create index "verification_identifier_idx" on "verification" ("identifier");
 
 -- ===========================================================================
 --  A. RÉFÉRENTIEL E-SPORT
@@ -187,13 +203,14 @@ CREATE TABLE note_elo (
 --  C. PARIS ET LIGUES ENTRE AMIS
 -- ===========================================================================
 
--- Les comptes de l'application (tes amis).
+-- Les joueurs de l'application (tes amis). L'identité de connexion (pseudo,
+-- mot de passe haché) est dans les tables de Better Auth ; on y relie le
+-- joueur par "auth_id". Vide seulement pour les comptes de démonstration.
 CREATE TABLE utilisateur (
-    id            serial PRIMARY KEY,
-    pseudo        text NOT NULL UNIQUE,
-    email         text NOT NULL UNIQUE,
-    mot_de_passe  text NOT NULL,             -- TOUJOURS un hachage (bcrypt/argon2), jamais en clair
-    cree_le       timestamptz NOT NULL DEFAULT now()
+    id       serial PRIMARY KEY,
+    pseudo   text NOT NULL UNIQUE,
+    auth_id  text UNIQUE REFERENCES "user" (id) ON DELETE CASCADE,
+    cree_le  timestamptz NOT NULL DEFAULT now()
 );
 
 -- Une ligue = un groupe d'amis avec SES règles d'économie.
@@ -202,7 +219,7 @@ CREATE TABLE ligue (
     id               serial PRIMARY KEY,
     nom              text NOT NULL,
     code_invitation  text NOT NULL UNIQUE,
-    createur_id      int  NOT NULL REFERENCES utilisateur(id),
+    createur_id      int  REFERENCES utilisateur(id),   -- vide : ligue créée par l'administrateur du serveur
     solde_depart     int  NOT NULL DEFAULT 1000 CHECK (solde_depart > 0),
     recharge_hebdo   int  NOT NULL DEFAULT 150  CHECK (recharge_hebdo >= 0),
     mise_min         int  NOT NULL DEFAULT 10   CHECK (mise_min > 0),
