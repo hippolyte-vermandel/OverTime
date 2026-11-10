@@ -148,3 +148,23 @@ export async function dernierPari(ligueId, utilisateurId) {
 	);
 	return d ?? null;
 }
+
+/**
+ * Les matchs sur lesquels le joueur a déjà parié dans sa ligue (un seul pari par match) :
+ * pour chaque match, les issues qu'il a prises. Sert à figer ces matchs dans l'écran Matchs.
+ * @returns {Promise<Record<number, number[]>>}
+ */
+export async function matchsParies(joueur) {
+	if (!joueur?.ligue) return {};
+	const lignes = await requete(
+		`SELECT m.serie_id, array_agg(DISTINCT ps.issue_id) AS issues
+		   FROM pari p
+		   JOIN pari_selection ps ON ps.pari_id = p.id
+		   JOIN issue  i ON i.id = ps.issue_id
+		   JOIN marche m ON m.id = i.marche_id
+		  WHERE p.ligue_id = $1 AND p.utilisateur_id = $2
+		  GROUP BY m.serie_id`,
+		[joueur.ligue.id, joueur.id]
+	);
+	return Object.fromEntries(lignes.map((l) => [l.serie_id, l.issues]));
+}

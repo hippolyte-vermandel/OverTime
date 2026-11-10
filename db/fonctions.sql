@@ -95,6 +95,7 @@ DECLARE
     regles      ligue%ROWTYPE;
     nb          int := COALESCE(array_length(p_issues, 1), 0);
     nb_marches  int;
+    nb_matchs   int;
     cote_tot    numeric := 1;
     sel         record;
     v_pari      int;
@@ -144,6 +145,27 @@ BEGIN
       FROM issue WHERE id = ANY (p_issues);
     IF nb_marches <> nb THEN
         RAISE EXCEPTION 'Un combiné ne peut pas contenir deux issues du même marché';
+    END IF;
+    -- Une seule sélection par match : les marchés d'un même match sont liés
+    -- (un 3-1 implique la victoire), les combiner fausserait la cote
+    SELECT COUNT(DISTINCT m.serie_id) INTO nb_matchs
+      FROM issue i JOIN marche m ON m.id = i.marche_id
+     WHERE i.id = ANY (p_issues);
+    IF nb_matchs <> nb THEN
+        RAISE EXCEPTION 'Un combiné ne peut contenir qu''une sélection par match';
+    END IF;
+    -- Un seul pari par match et par joueur, marchés secondaires compris :
+    -- sinon on contournerait la mise maximale en multipliant les coupons
+    IF EXISTS (SELECT 1
+                 FROM pari p
+                 JOIN pari_selection ps ON ps.pari_id = p.id
+                 JOIN issue  i ON i.id = ps.issue_id
+                 JOIN marche m ON m.id = i.marche_id
+                WHERE p.ligue_id = p_ligue AND p.utilisateur_id = p_utilisateur
+                  AND m.serie_id IN (SELECT m2.serie_id
+                                       FROM issue i2 JOIN marche m2 ON m2.id = i2.marche_id
+                                      WHERE i2.id = ANY (p_issues))) THEN
+        RAISE EXCEPTION 'Tu as déjà un pari sur ce match';
     END IF;
 
     -- Un pari ne peut pas déborder sur la saison suivante

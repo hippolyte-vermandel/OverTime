@@ -58,6 +58,7 @@
 	const journees = $derived(vue === 'liste' ? [...parJour.keys()].sort().map(journee) : [journee(jour)]);
 
 	function choisir(match, issue) {
+		if (data.paries?.[match.id]) return; // déjà parié : un seul pari par match
 		if (selection.get(match.id)?.issue.id === issue.id) selection.delete(match.id);
 		else selection.set(match.id, { match, issue });
 	}
@@ -124,7 +125,7 @@
 				<p class="message">Pas de match ce jour-là. Choisis un jour marqué d’un point.</p>
 			{/if}
 			{#if j.vedette}
-				<CarteVedette match={j.vedette} choix={selection.get(j.vedette.id)?.issue.id ?? null} {maintenant} onchoisir={choisir} />
+				<CarteVedette match={j.vedette} choix={selection.get(j.vedette.id)?.issue.id ?? null} pariees={data.paries?.[j.vedette.id] ?? null} {maintenant} onchoisir={choisir} />
 			{/if}
 			<div class="groupes">
 				{#each j.groupes as g (g.competition + g.phase)}
@@ -134,7 +135,7 @@
 							<h3>{g.competition}{#if g.phase}<span>, {g.phase}</span>{/if}</h3>
 						</div>
 						{#each g.matchs as m (m.id)}
-							<CarteCompacte match={m} choix={selection.get(m.id)?.issue.id ?? null} {maintenant} onchoisir={choisir} />
+							<CarteCompacte match={m} choix={selection.get(m.id)?.issue.id ?? null} pariees={data.paries?.[m.id] ?? null} {maintenant} onchoisir={choisir} />
 						{/each}
 					</section>
 				{/each}
