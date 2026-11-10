@@ -201,7 +201,7 @@
 
 		<section class="carte" aria-labelledby="t-import">
 			<h2 id="t-import">Matchs importés automatiquement</h2>
-			<p class="aide">Toutes les heures, le serveur ajoute les prochains matchs, met à jour les horaires et valide les résultats. « Aperçu » montre ce qui serait importé sans rien enregistrer.</p>
+			<p class="aide">Toutes les heures (tous les quarts d’heure pour PandaScore), le serveur ajoute les prochains matchs, met à jour les horaires et valide les résultats. « Aperçu » montre ce qui serait importé sans rien enregistrer.</p>
 			{#each data.sources as s (s.cle)}
 				<div class="source">
 					<div class="infos">

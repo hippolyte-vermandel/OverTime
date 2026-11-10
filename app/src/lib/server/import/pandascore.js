@@ -66,7 +66,11 @@ export function versMatch(m, jeu) {
 		termine: fini,
 		scoreA: score(a),
 		scoreB: score(b),
-		annule: m.status === 'canceled'
+		annule: m.status === 'canceled',
+		sigleA: a.acronym ?? null,
+		sigleB: b.acronym ?? null,
+		logoA: a.image_url ?? null,
+		logoB: b.image_url ?? null
 	};
 }
 

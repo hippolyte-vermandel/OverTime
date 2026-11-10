@@ -18,7 +18,9 @@ import { equipeConnue, scoreValide } from './outils.js';
  *   quand: Date, bestOf: number,
  *   equipeA: string, equipeB: string,
  *   termine: boolean, scoreA: number | null, scoreB: number | null,
- *   annule: boolean
+ *   annule: boolean,
+ *   sigleA?: string | null, sigleB?: string | null,   // sigles officiels, si la source les donne
+ *   logoA?: string | null, logoB?: string | null      // adresses des logos, si la source les donne
  * }} MatchNormalise
  */
 
@@ -52,6 +54,21 @@ const noter = (sourceId, idExterne, serieId) =>
 		[sourceId, idExterne, serieId]
 	);
 
+// Sigle officiel et logo fournis par la source. Le sigle remplace celui fabriqué à partir
+// du nom ; un logo déjà présent (choisi par un admin, par exemple) n'est jamais écrasé.
+const sigleOk = (s) => (typeof s === 'string' && /^[\p{L}\p{N}.]{1,6}$/u.test(s.trim()) ? s.trim().toUpperCase() : null);
+const logoOk = (u) => (typeof u === 'string' && /^https:\/\/[^\s"'<>]+$/.test(u) ? u : null);
+async function completerEquipe(nom, sigle, logo) {
+	const s = sigleOk(sigle);
+	const l = logoOk(logo);
+	if (!s && !l) return;
+	await requete(
+		`UPDATE equipe SET sigle = coalesce($2, sigle), logo_url = coalesce(logo_url, $3)
+		  WHERE lower(nom) = lower($1) AND (($2::text IS NOT NULL AND sigle IS DISTINCT FROM $2) OR (logo_url IS NULL AND $3::text IS NOT NULL))`,
+		[nom, s, l]
+	);
+}
+
 /**
  * Range une liste de matchs normalisés dans la base. Chaque match est traité à part :
  * une erreur sur l'un n'empêche pas les autres.
@@ -68,9 +85,17 @@ export async function rangerMatchs(sourceId, matchs, maintenant = new Date()) {
 		const nom = `${m.equipeA} contre ${m.equipeB} (${m.competition})`;
 		try {
 			const connue = await serieConnue(sourceId, m.id);
+			// Après coup, pour que les équipes existent déjà : sigles et logos de la source
+			const completer = async () => {
+				if (equipeConnue(m.equipeA)) await completerEquipe(m.equipeA, m.sigleA, m.logoA);
+				if (equipeConnue(m.equipeB)) await completerEquipe(m.equipeB, m.sigleB, m.logoB);
+			};
 
 			if (connue) {
-				if (connue.statut !== 'programmee' || !connue.a_regler) continue; // déjà réglé ou annulé
+				if (connue.statut !== 'programmee' || !connue.a_regler) {
+					await completer(); // déjà réglé ou annulé : on complète seulement les équipes
+					continue;
+				}
 				if (m.annule) {
 					await annulerMatch(connue.id);
 					bilan.annules++;
@@ -99,6 +124,7 @@ export async function rangerMatchs(sourceId, matchs, maintenant = new Date()) {
 						bilan.deplaces++;
 					}
 				}
+				await completer();
 				continue;
 			}
 
@@ -115,10 +141,12 @@ export async function rangerMatchs(sourceId, matchs, maintenant = new Date()) {
 				}
 				await noter(sourceId, m.id, await enregistrerMatchPasse({ ...base, scoreA: m.scoreA, scoreB: m.scoreB }));
 				bilan.historique++;
+				await completer();
 			} else if (m.quand.getTime() > maintenant.getTime() + CINQ_MINUTES) {
 				const { serieId } = await creerMatch(base);
 				await noter(sourceId, m.id, serieId);
 				bilan.crees++;
+				await completer();
 			} else {
 				bilan.ignores++; // déjà commencé : trop tard pour ouvrir les paris
 			}

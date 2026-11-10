@@ -73,7 +73,7 @@ test('Outils : scores et équipes', () => {
 
 import * as ps from '../src/lib/server/import/pandascore.js';
 
-const equipe = (id, name) => ({ type: 'Team', opponent: { id, name, acronym: name.slice(0, 3) } });
+const equipe = (id, name) => ({ type: 'Team', opponent: { id, name, acronym: name.slice(0, 3), image_url: `https://cdn.pandascore.co/images/team/image/${id}/logo.png` } });
 const matchPs = (o = {}) => ({
 	id: 991, scheduled_at: '2026-11-22T19:00:00Z', status: 'not_started', match_type: 'best_of', number_of_games: 7,
 	opponents: [equipe(1, 'Karmine Corp'), equipe(2, 'Team Vitality')], results: [{ team_id: 1, score: 0 }, { team_id: 2, score: 0 }],
@@ -88,6 +88,8 @@ test('PandaScore : match à venir, terminé, annulé', () => {
 	assert.equal(avenir.competition, 'RLCS 2026 World Championship');
 	assert.equal(avenir.phase, 'Playoffs');
 	assert.equal(avenir.termine, false);
+	assert.equal(avenir.sigleA, 'Kar');
+	assert.equal(avenir.logoB, 'https://cdn.pandascore.co/images/team/image/2/logo.png');
 	const fini = ps.versMatch(matchPs({ status: 'finished', winner_id: 2, results: [{ team_id: 1, score: 2 }, { team_id: 2, score: 4 }] }), jeu);
 	assert.deepEqual([fini.termine, fini.scoreA, fini.scoreB], [true, 2, 4]);
 	assert.equal(ps.versMatch(matchPs({ status: 'finished', winner_id: 2, forfeit: true }), jeu).termine, false, 'forfait : à la main');

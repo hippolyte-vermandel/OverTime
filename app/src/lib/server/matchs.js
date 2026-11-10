@@ -12,7 +12,7 @@ export async function prochainsMatchs(limite = 200) {
 		       c.nom AS competition, c.categorie,
 		       j.code AS jeu, j.nom AS jeu_nom,
 		       (SELECT json_agg(json_build_object(
-		                 'nom', e.nom, 'sigle', e.sigle, 'cote_terrain', p.cote_terrain)
+		                 'nom', e.nom, 'sigle', e.sigle, 'logo_url', e.logo_url, 'cote_terrain', p.cote_terrain)
 		                 ORDER BY p.cote_terrain)
 		          FROM participation p JOIN equipe e ON e.id = p.equipe_id
 		         WHERE p.serie_id = s.id) AS equipes,

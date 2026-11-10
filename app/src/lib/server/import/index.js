@@ -72,13 +72,16 @@ export async function importer(cle, { apercu = false } = {}) {
 	return { texte: resumer(src.jeu, bilan), erreur: bilan.erreurs.length > 0 };
 }
 
-/** Toutes les sources actives, l'une après l'autre (tâche horaire) */
-export async function toutImporter() {
+/**
+ * Les sources actives, l'une après l'autre (tâches automatiques).
+ * @param {string[]} [seulement] limiter à certaines sources (ex. ['pandascore'])
+ */
+export async function toutImporter(seulement) {
 	if (enCours) return;
 	enCours = true;
 	try {
 		for (const s of SOURCES) {
-			if (!s.active()) continue;
+			if (!s.active() || (seulement && !seulement.includes(s.cle))) continue;
 			try {
 				const r = await importer(/** @type {any} */ (s.cle));
 				derniers[s.cle] = { quand: new Date(), texte: r.texte, erreur: r.erreur };

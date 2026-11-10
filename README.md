@@ -204,7 +204,8 @@ prochains matchs, les changements d'horaire et les résultats depuis :
   couvre un seul jeu, à condition que le code reste ouvert ;
 - [PandaScore](https://pandascore.co) pour **Rocket League** et **Call of Duty**, avec une clé
   personnelle (`PANDASCORE_TOKEN` dans le `.env`, à ne jamais publier) et l'offre gratuite
-  « fixtures » (calendrier et résultats, sans direct).
+  « fixtures » (calendrier, résultats, sigles et logos des équipes, sans direct). PandaScore
+  est interrogé tous les quarts d'heure, pour que les gains arrivent vite après un match.
 
 Une source sans clé reste inactive.
 
