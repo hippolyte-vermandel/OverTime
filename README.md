@@ -182,8 +182,9 @@ du tunnel.
   tout le monde repart de 1000 noxus ; les classements passés restent consultables.
 - **Recharge** : 150 noxus par semaine.
 - **Mises** : de 10 à 500 noxus par pari.
-- **Classement** : un seul classement par ligue, tous jeux confondus, au **rendement**
-  (gains ÷ mises), pour ne pas avantager celui qui mise tout sur les favoris.
+- **Classement** : un seul classement par ligue, tous jeux confondus, au **bilan** : noxus
+  récupérés moins noxus misés sur les paris réglés. Il faut 10 paris réglés dans la saison pour
+  être classé.
 - **Paris** : fermés à l'heure de début du match.
 - **Gains** : toujours arrondis à l'inférieur.
 - **Combiné avec une sélection annulée** (joueur remplacé, map non jouée...) : on calcule le

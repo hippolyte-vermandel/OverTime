@@ -7,7 +7,7 @@ import { cleJour } from '#lib/format.js';
 import { MoteurCotes, marchesSerie, scoresSerie, cote, PARAMETRES } from './moteur.js';
 
 // Marge retirée des cotes. 0 = cotes « justes » (cote = 1 / probabilité) : sur la durée,
-// personne n'est avantagé par la maison, seuls les bons pronostics font monter le rendement.
+// personne n'est avantagé par la maison, seuls les bons pronostics font monter le bilan.
 export const MARGE = 0;
 // Bornes des probabilités enregistrées (la base refuse 0 et 1)
 const borner = (p) => Math.min(0.9999, Math.max(0.0001, p));

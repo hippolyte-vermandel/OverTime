@@ -3,6 +3,7 @@
 // depuis 7 jours, et son solde de départ au début de chaque saison. La fonction SQL ne
 // verse jamais deux fois : on peut donc la lancer souvent sans risque.
 import { requete } from './db.js';
+import { noterTousLesRangs } from './paris.js';
 
 const UNE_HEURE = 60 * 60 * 1000;
 let lancee = false;
@@ -18,10 +19,24 @@ export async function verserRecharges() {
 	}
 }
 
+// Relevé horaire des rangs : le dernier relevé de la journée sert de référence le lendemain
+export async function releverRangs() {
+	try {
+		await noterTousLesRangs();
+	} catch (e) {
+		console.error('Relevé des rangs impossible pour l’instant :', e.message);
+	}
+}
+
+async function tourDeTaches() {
+	await verserRecharges();
+	await releverRangs();
+}
+
 /** Lance les tâches au démarrage du serveur, puis toutes les heures */
 export function demarrerTaches() {
 	if (lancee) return;
 	lancee = true;
-	verserRecharges();
-	setInterval(verserRecharges, UNE_HEURE).unref();
+	tourDeTaches();
+	setInterval(tourDeTaches, UNE_HEURE).unref();
 }

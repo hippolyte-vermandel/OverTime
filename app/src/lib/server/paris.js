@@ -65,8 +65,9 @@ export async function bilanSemaine(joueur) {
 }
 
 /**
- * Classement au rendement : noxus récupérés divisés par noxus misés, sur les paris réglés.
+ * Classement au bilan : noxus récupérés moins noxus misés, sur les paris réglés.
  * Saison : il faut SEUIL_CLASSEMENT paris réglés pour être classé. Semaine : au moins un.
+ * En saison, chaque ligne indique aussi les places gagnées ou perdues depuis la veille.
  * @param {'saison' | 'semaine'} periode
  */
 export async function classement(ligueId, periode) {
@@ -88,12 +89,51 @@ export async function classement(ligueId, periode) {
 		[ligueId]
 	);
 	const seuil = periode === 'semaine' ? 1 : SEUIL_CLASSEMENT;
-	const avecRendement = lignes.map((l) => ({ ...l, rendement: l.mise > 0 ? l.recupere / l.mise : null }));
-	const classes = avecRendement
+	const avecBilan = lignes.map((l) => ({ ...l, bilan: l.recupere - l.mise }));
+	const classes = avecBilan
 		.filter((l) => l.regles >= seuil)
-		.sort((a, b) => b.rendement - a.rendement || b.regles - a.regles || a.pseudo.localeCompare(b.pseudo, 'fr'));
-	const nonClasses = avecRendement.filter((l) => l.regles < seuil).sort((a, b) => b.regles - a.regles || a.pseudo.localeCompare(b.pseudo, 'fr'));
+		.sort((a, b) => b.bilan - a.bilan || b.regles - a.regles || a.pseudo.localeCompare(b.pseudo, 'fr'))
+		.map((l, i) => ({ ...l, rang: i + 1, evolution: null }));
+	const nonClasses = avecBilan.filter((l) => l.regles < seuil).sort((a, b) => b.regles - a.regles || a.pseudo.localeCompare(b.pseudo, 'fr'));
+
+	if (periode === 'saison' && classes.length) {
+		// Rang de la veille : le dernier relevé d'un jour précédent
+		const veille = await requete(
+			`SELECT utilisateur_id, rang FROM rang_classement
+			  WHERE ligue_id = $1 AND saison_id = saison_courante($1, current_date)
+			    AND jour = (SELECT max(jour) FROM rang_classement
+			                 WHERE ligue_id = $1 AND saison_id = saison_courante($1, current_date) AND jour < $2::date)`,
+			[ligueId, jourLigue()]
+		);
+		const avant = new Map(veille.map((v) => [v.utilisateur_id, v.rang]));
+		for (const l of classes) if (avant.has(l.id)) l.evolution = avant.get(l.id) - l.rang; // positif : places gagnées
+	}
 	return { classes, nonClasses, seuil };
+}
+
+/** Date du jour dans le fuseau de la ligue (AAAA-MM-JJ) */
+const jourLigue = () => new Date().toLocaleDateString('sv-SE', { timeZone: FUSEAU_HORAIRE });
+
+/** Note le rang de chaque membre classé, pour aujourd'hui (remplace le relevé précédent du jour) */
+export async function noterRangs(ligueId) {
+	const { classes } = await classement(ligueId, 'saison');
+	const jour = jourLigue();
+	await requete(
+		`DELETE FROM rang_classement WHERE ligue_id = $1 AND saison_id = saison_courante($1, current_date) AND jour = $2::date`,
+		[ligueId, jour]
+	);
+	for (const l of classes)
+		await requete(
+			`INSERT INTO rang_classement (ligue_id, saison_id, utilisateur_id, jour, rang)
+			 VALUES ($1, saison_courante($1, current_date), $2, $3::date, $4)`,
+			[ligueId, l.id, jour, l.rang]
+		);
+}
+
+/** Relevé des rangs pour toutes les ligues */
+export async function noterTousLesRangs() {
+	const ligues = await requete('SELECT id FROM ligue');
+	for (const l of ligues) await noterRangs(l.id);
 }
 
 /** Dernier pari placé par un membre (pour la carte du rival) */

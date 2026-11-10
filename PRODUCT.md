@@ -27,7 +27,7 @@ OverTime est un jeu de pronostics e-sport entre amis, avec une monnaie virtuelle
 
 ## Positioning
 
-Une ligue privée et fermée, centrée sur l'e-sport (région EMEA et compétitions mondiales), avec des paris plus fins que la simple victoire et un classement par saison au rendement, tous jeux confondus. Ce n'est ni un site de paris en argent réel ni une application publique.
+Une ligue privée et fermée, centrée sur l'e-sport (région EMEA et compétitions mondiales), avec des paris plus fins que la simple victoire et un classement par saison au bilan en noxus, tous jeux confondus. Ce n'est ni un site de paris en argent réel ni une application publique.
 
 ## Operating Context
 
@@ -40,7 +40,7 @@ Une ligue privée et fermée, centrée sur l'e-sport (région EMEA et compétiti
 ## Capabilities and Constraints
 
 - Économie : 1000 noxus au début de chaque saison, recharge de 150 par semaine, mises de 10 à 500 par pari. Réglable par ligue.
-- Classement unique par ligue, tous jeux confondus, au rendement (noxus récupérés divisés par noxus misés, sur les paris réglés). Il faut au moins 10 paris réglés dans la saison pour être classé.
+- Classement unique par ligue, tous jeux confondus, au bilan : noxus récupérés moins noxus misés, sur les paris réglés (544 récupérés pour 300 misés = +244). Il faut au moins 10 paris réglés dans la saison pour être classé. Une flèche indique les places gagnées ou perdues depuis la veille.
 - Paris fermés à l'heure de début du match ; gains arrondis à l'inférieur.
 - Match annulé : pari simple remboursé. Un match reporté de plus de 48 heures est traité comme annulé.
 - Combinés : une sélection annulée divise le gain par deux ; si cette moitié est inférieure à la mise, la mise est remboursée ; tout annulé, mise remboursée.
