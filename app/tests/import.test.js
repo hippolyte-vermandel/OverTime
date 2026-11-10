@@ -105,3 +105,32 @@ test('PandaScore : les deux jeux, clé dans l’en-tête', async () => {
 	assert.ok(vus.every((v) => v.o.headers.Authorization === 'Bearer SECRET' && !v.url.includes('SECRET')));
 	await assert.rejects(ps.lireMatchs({ depuis: new Date(), jusqua: new Date(), cle: '' }), /PANDASCORE_TOKEN/);
 });
+
+test('Leaguepedia : sigles et logos des équipes', async () => {
+	const adresses = [];
+	const chercher = async (url) => {
+		adresses.push(url);
+		const u = new URL(url);
+		if (u.searchParams.get('tables') === 'Teams')
+			return { ok: true, status: 200, json: async () => [{ Nom: 'Gen.G', Page: 'Gen.G', Sigle: 'GEN', Image: 'Gen.Glogo square.png' }, { Nom: 'Bilibili Gaming', Page: 'Bilibili Gaming', Sigle: 'BLG', Image: '' }] };
+		return { ok: true, status: 200, json: async () => [{ MatchId: 'w1', Team1: 'Bilibili Gaming', Team2: 'Gen.G', BestOf: '5', Quand: '2026-11-12 09:00:00', Winner: '', Tournoi: 'Worlds 2026 Main Event', Region: 'International' }] };
+	};
+	const [m] = await lp.lireMatchs({ depuis: new Date(), jusqua: new Date(), regions: ['International'], chercher });
+	assert.equal(adresses.length, 2, 'une requête de matchs, une d’équipes');
+	assert.equal(m.sigleA, 'BLG');
+	assert.equal(m.logoA, null, 'pas d’image : blason neutre');
+	assert.equal(m.sigleB, 'GEN');
+	assert.equal(m.logoB, 'https://lol.fandom.com/wiki/Special:FilePath/Gen.Glogo%20square.png?width=96');
+	assert.match(new URL(adresses[1]).searchParams.get('where'), /'Gen\.G'/);
+});
+
+test('Leaguepedia : une panne des équipes n’empêche pas l’import', async () => {
+	const chercher = async (url) =>
+		new URL(url).searchParams.get('tables') === 'Teams' ? { ok: false, status: 503 } : { ok: true, status: 200, json: async () => [{ MatchId: 'w2', Team1: 'A', Team2: 'B', BestOf: '1', Quand: '2026-11-12 09:00:00' }] };
+	const orig = console.error;
+	console.error = () => {};
+	const matchs = await lp.lireMatchs({ depuis: new Date(), jusqua: new Date(), regions: [], chercher });
+	console.error = orig;
+	assert.equal(matchs.length, 1);
+	assert.equal(matchs[0].logoA ?? null, null);
+});

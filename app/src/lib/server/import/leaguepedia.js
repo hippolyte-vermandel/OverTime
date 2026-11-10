@@ -99,6 +99,44 @@ export function versMatch(ligne) {
 	};
 }
 
+// --- Équipes : sigle officiel et logo (table Cargo « Teams ») ---
+const EQUIPES_PAR_REQUETE = 40;
+
+/** Adresse du logo d'une équipe : Special:FilePath redirige vers l'image, ici en 96 px */
+export const adresseLogo = (fichier) => (fichier ? `https://lol.fandom.com/wiki/Special:FilePath/${encodeURIComponent(String(fichier).trim())}?width=96` : null);
+
+export function adresseEquipes(noms) {
+	const liste = noms.map(sql).join(', ');
+	const p = new URLSearchParams({
+		tables: 'Teams',
+		fields: 'Teams.Name=Nom,Teams.OverviewPage=Page,Teams.Short=Sigle,Teams.Image=Image',
+		where: `Teams.OverviewPage IN (${liste}) OR Teams.Name IN (${liste})`,
+		limit: String(PAR_PAGE),
+		format: 'json'
+	});
+	return `${ADRESSE}?${p}`;
+}
+
+/**
+ * Sigles et logos des équipes citées dans les matchs, par nom (en minuscules).
+ * Un échec ici n'empêche pas l'import des matchs : les équipes gardent leur blason neutre.
+ */
+export async function lireEquipes(noms, chercher = fetch) {
+	const fiches = new Map();
+	const uniques = [...new Set(noms.filter(Boolean))];
+	for (let i = 0; i < uniques.length; i += EQUIPES_PAR_REQUETE) {
+		const r = await chercher(adresseEquipes(uniques.slice(i, i + EQUIPES_PAR_REQUETE)), { headers: { 'User-Agent': AGENT, Accept: 'application/json' } });
+		if (!r.ok) throw new Error(`Leaguepedia (équipes) a répondu ${r.status}`);
+		const lignes = await r.json();
+		if (!Array.isArray(lignes)) continue;
+		for (const l of lignes) {
+			const fiche = { sigle: lire(l, 'Sigle') || null, logo: adresseLogo(lire(l, 'Image')) };
+			for (const cle of [lire(l, 'Page'), lire(l, 'Nom')]) if (cle) fiches.set(String(cle).toLowerCase(), fiche);
+		}
+	}
+	return fiches;
+}
+
 /**
  * Matchs LoL entre deux dates, page par page.
  * @param {{ depuis: Date, jusqua: Date, regions: string[], chercher?: typeof fetch }} o
@@ -116,6 +154,16 @@ export async function lireMatchs({ depuis, jusqua, regions, chercher = fetch }) 
 			if (m) matchs.push(m);
 		}
 		if (lignes.length < PAR_PAGE) break;
+	}
+	try {
+		const fiches = await lireEquipes(matchs.flatMap((m) => [m.equipeA, m.equipeB]), chercher);
+		for (const m of matchs) {
+			const a = fiches.get(m.equipeA.toLowerCase());
+			const b = fiches.get(m.equipeB.toLowerCase());
+			Object.assign(m, { sigleA: a?.sigle ?? null, logoA: a?.logo ?? null, sigleB: b?.sigle ?? null, logoB: b?.logo ?? null });
+		}
+	} catch (e) {
+		console.error('Sigles et logos Leaguepedia indisponibles :', e.message);
 	}
 	return matchs;
 }

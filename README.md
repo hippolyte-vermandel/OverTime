@@ -197,7 +197,7 @@ du tunnel.
 Les matchs arrivent de deux façons. Toutes les heures, le serveur importe tout seul les
 prochains matchs, les changements d'horaire et les résultats depuis :
 
-- [Leaguepedia](https://lol.fandom.com) pour **League of Legends**, sans clé. Les
+- [Leaguepedia](https://lol.fandom.com) pour **League of Legends** (matchs, sigles et logos des équipes), sans clé. Les
   régions suivies se règlent avec `LEAGUEPEDIA_REGIONS` dans le `.env` ;
 - [Liquipedia](https://liquipedia.net/valorant) pour **VALORANT**, avec une clé personnelle
   (`LPDB_API_KEY` dans le `.env`, à ne jamais publier). L'offre gratuite de Liquipedia
