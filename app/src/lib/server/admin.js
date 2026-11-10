@@ -219,6 +219,21 @@ export async function reinitialiserMotDePasse(ligueId, utilisateurId) {
 	return { pseudo: cible.pseudo, temporaire };
 }
 
+/**
+ * Nomme un membre administrateur, ou lui retire ce rôle.
+ * Une ligue garde toujours au moins un administrateur.
+ */
+export async function changerRole(ligueId, utilisateurId, admin) {
+	return transaction(async (c) => {
+		const { rows: membres } = await c.query('SELECT utilisateur_id, role FROM membre_ligue WHERE ligue_id = $1 FOR UPDATE', [ligueId]);
+		const cible = membres.find((m) => m.utilisateur_id === utilisateurId);
+		if (!cible) throw new ErreurSaisie('Ce membre ne fait pas partie de la ligue.');
+		if (!admin && cible.role === 'admin' && membres.filter((m) => m.role === 'admin').length === 1)
+			throw new ErreurSaisie('La ligue doit garder au moins un administrateur. Nomme d’abord quelqu’un d’autre.');
+		await c.query('UPDATE membre_ligue SET role = $3 WHERE ligue_id = $1 AND utilisateur_id = $2', [ligueId, utilisateurId, admin ? 'admin' : 'membre']);
+	});
+}
+
 /** Erreur de saisie à montrer telle quelle à l'administrateur */
 export class ErreurSaisie extends Error {}
 
