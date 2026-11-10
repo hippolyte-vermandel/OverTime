@@ -3,8 +3,10 @@ import {
 	jeuxDuels,
 	referentiel,
 	creerMatch,
+	enregistrerMatchPasse,
+	instant,
 	resultatsAValider,
-	validerVainqueur,
+	validerResultat,
 	annulerMatch,
 	membres,
 	codeInvitation,
@@ -38,47 +40,47 @@ function echec(e, action, champs = {}) {
 	return fail(500, { action, erreur: 'Une erreur est survenue. Réessaie dans un instant.', ...champs });
 }
 
-const cote = (v) => Number(String(v ?? '').replace(',', '.'));
-
 export const actions = {
 	creer: async ({ request, locals }) => {
 		exigerAdmin(locals);
 		const f = Object.fromEntries(await request.formData());
 		const champs = { valeurs: f };
+		const passe = f.deja_joue === 'on';
+		if (!f.jeu || !String(f.competition ?? '').trim() || !String(f.equipe_a ?? '').trim() || !String(f.equipe_b ?? '').trim() || !f.date || !f.heure)
+			return fail(400, { action: 'creer', erreur: 'Remplis le jeu, la compétition, les deux équipes, la date et l’heure.', ...champs });
+		const bestOf = Number(f.best_of);
+		if (![1, 3, 5, 7].includes(bestOf)) return fail(400, { action: 'creer', erreur: 'Le format doit être BO1, BO3, BO5 ou BO7.', ...champs });
+
 		const m = {
-			jeu: String(f.jeu ?? ''),
-			competition: String(f.competition ?? '').trim(),
+			jeu: String(f.jeu),
+			competition: String(f.competition).trim(),
 			region: String(f.region ?? '').trim(),
 			phase: String(f.phase ?? '').trim(),
-			quand: `${f.date}T${f.heure}`,
-			bestOf: Number(f.best_of),
-			equipeA: String(f.equipe_a ?? '').trim(),
-			equipeB: String(f.equipe_b ?? '').trim(),
-			coteA: cote(f.cote_a),
-			coteB: cote(f.cote_b)
+			quand: await instant(`${f.date}T${f.heure}`),
+			bestOf,
+			equipeA: String(f.equipe_a).trim(),
+			equipeB: String(f.equipe_b).trim()
 		};
-		if (!m.jeu || !m.competition || !m.equipeA || !m.equipeB || !f.date || !f.heure)
-			return fail(400, { action: 'creer', erreur: 'Remplis le jeu, la compétition, les deux équipes, la date et l’heure.', ...champs });
-		if (![1, 3, 5, 7].includes(m.bestOf)) return fail(400, { action: 'creer', erreur: 'Le format doit être BO1, BO3, BO5 ou BO7.', ...champs });
-		if (!(m.coteA >= 1.01 && m.coteB >= 1.01 && m.coteA <= 100 && m.coteB <= 100))
-			return fail(400, { action: 'creer', erreur: 'Chaque cote doit être comprise entre 1,01 et 100.', ...champs });
-
 		try {
+			if (passe) {
+				await enregistrerMatchPasse({ ...m, scoreA: Number(f.score_a), scoreB: Number(f.score_b) });
+				return { action: 'creer', succes: `Résultat ${m.equipeA} ${f.score_a}-${f.score_b} ${m.equipeB} enregistré dans l’historique.` };
+			}
 			await creerMatch(m);
 		} catch (e) {
 			return echec(e, 'creer', champs);
 		}
-		return { action: 'creer', succes: `${m.equipeA} contre ${m.equipeB} est ajouté. Les paris sont ouverts.` };
+		return { action: 'creer', succes: `${m.equipeA} contre ${m.equipeB} est ajouté, avec ses cotes. Les paris sont ouverts.` };
 	},
 
-	vainqueur: async ({ request, locals }) => {
+	resultat: async ({ request, locals }) => {
 		exigerAdmin(locals);
 		const f = await request.formData();
 		const serie = Number(f.get('serie'));
-		const gagnant = String(f.get('gagnant') ?? '');
+		const [scoreA, scoreB] = String(f.get('score') ?? '').split('-').map(Number);
 		try {
-			const nb = await validerVainqueur(serie, gagnant);
-			return { action: 'resultat', succes: `Victoire de ${gagnant} validée. ${nb} pari${nb > 1 ? 's' : ''} réglé${nb > 1 ? 's' : ''}.` };
+			const { nb, gagnant } = await validerResultat(serie, scoreA, scoreB);
+			return { action: 'resultat', succes: `Victoire de ${gagnant} (${scoreA}-${scoreB}) validée. ${nb} pari${nb > 1 ? 's' : ''} réglé${nb > 1 ? 's' : ''}.` };
 		} catch (e) {
 			return echec(e, 'resultat');
 		}

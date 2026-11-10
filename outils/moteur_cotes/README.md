@@ -9,6 +9,7 @@ Python 3.10+ ; le moteur et la simulation n'utilisent que la bibliothèque stand
 | `simulation.py` | Ligue fictive de 10 équipes où l'on connaît la vraie probabilité de chaque map |
 | `evaluation.py` | Rejoue une ligue match par match (sans regarder le futur) et mesure la qualité des cotes |
 | `experiences.py` | Même chose sur 30 ligues, pour des conclusions fiables |
+| `exporter_parite.py` | Exporte une ligue simulée et les prévisions Python vers `app/tests/fixtures/parite-moteur.json`, pour vérifier la version JavaScript |
 | `import_liquipedia.py` | Import de vrais matchs LoL via l'API Liquipedia (**non testé**, clé API nécessaire) |
 
 ```bash
@@ -34,3 +35,11 @@ python3 experiences.py    # réglages et calibration sur 30 ligues
   les cas extrêmes (la loi de Poisson ne tient pas compte de la victoire ou défaite).
 
 Ces conclusions valent pour un monde simulé : à confirmer sur les vraies données.
+
+## Dans l'application
+
+Le moteur tourne dans l'application sous forme d'une traduction JavaScript fidèle :
+`app/src/lib/server/cotes/moteur.js`. Le test `npm test` (dans `app/`) rejoue la ligue
+exportée par `exporter_parite.py` et vérifie que les deux versions donnent les mêmes
+chiffres, match par match. Après toute modification de `moteur.py`, reporte-la dans
+`moteur.js`, relance `python3 exporter_parite.py`, puis `npm test`.
