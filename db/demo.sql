@@ -83,6 +83,6 @@ SELECT n, 'score_exact', 'Score exact', date_trunc('hour', now()) + dans
 INSERT INTO utilisateur (pseudo) VALUES ('demo');
 INSERT INTO ligue (nom, code_invitation, createur_id) VALUES ('Ligue démo', 'DEMO-0000', 1);
 SELECT rejoindre_ligue(1, 'DEMO-0000');
-UPDATE membre_ligue SET role = 'admin';
+UPDATE membre_ligue SET role = 'proprietaire';
 
 COMMIT;

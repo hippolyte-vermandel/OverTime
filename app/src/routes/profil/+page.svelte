@@ -13,7 +13,7 @@
 		<div>
 			<h1>{j.pseudo}</h1>
 			{#if j.ligue}
-				<span class="ligue">{j.ligue.nom}{j.role === 'admin' ? ', administrateur' : ''}</span>
+				<span class="ligue">{j.ligue.nom}{j.role === 'proprietaire' ? ', propriétaire' : j.role === 'admin' ? ', administrateur' : ''}</span>
 			{/if}
 		</div>
 	</section>
@@ -26,7 +26,7 @@
 		</section>
 	{/if}
 
-	{#if j.role === 'admin'}
+	{#if j.estAdmin}
 		<a class="lien-admin" href="/admin">
 			<span><span class="titre-lien">Administration</span><span class="sous">Ajouter des matchs, valider les résultats, gérer les membres</span></span>
 			<span aria-hidden="true">›</span>

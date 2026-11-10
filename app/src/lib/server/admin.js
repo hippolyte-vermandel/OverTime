@@ -186,7 +186,7 @@ export async function membres(ligueId) {
 		`SELECT u.id, u.pseudo, m.role, m.rejoint_le, u.auth_id IS NOT NULL AS a_un_compte, solde($1, u.id) AS solde
 		   FROM membre_ligue m JOIN utilisateur u ON u.id = m.utilisateur_id
 		  WHERE m.ligue_id = $1
-		  ORDER BY m.role, lower(u.pseudo)`,
+		  ORDER BY CASE m.role WHEN 'proprietaire' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, lower(u.pseudo)`,
 		[ligueId]
 	);
 }
@@ -200,13 +200,16 @@ export async function codeInvitation(ligueId) {
  * Remplace le mot de passe d'un membre par un mot de passe temporaire, renvoyé une seule fois
  * à l'administrateur. Toutes les sessions du membre sont fermées.
  */
-export async function reinitialiserMotDePasse(ligueId, utilisateurId) {
+export async function reinitialiserMotDePasse(demandeur, utilisateurId) {
 	const [cible] = await requete(
-		`SELECT u.pseudo, u.auth_id FROM utilisateur u JOIN membre_ligue m ON m.utilisateur_id = u.id
+		`SELECT u.pseudo, u.auth_id, m.role FROM utilisateur u JOIN membre_ligue m ON m.utilisateur_id = u.id
 		  WHERE u.id = $1 AND m.ligue_id = $2`,
-		[utilisateurId, ligueId]
+		[utilisateurId, demandeur.ligue.id]
 	);
 	if (!cible?.auth_id) throw new ErreurSaisie('Ce membre n’a pas de compte de connexion.');
+	// Un administrateur ne peut pas prendre la main sur le compte d'un autre administrateur
+	if (cible.role !== 'membre' && !demandeur.estProprietaire && utilisateurId !== demandeur.id)
+		throw new ErreurSaisie('Seul le propriétaire peut réinitialiser le mot de passe d’un administrateur.');
 
 	const temporaire = motDePasseTemporaire();
 	const ctx = await auth.$context;
@@ -221,17 +224,15 @@ export async function reinitialiserMotDePasse(ligueId, utilisateurId) {
 
 /**
  * Nomme un membre administrateur, ou lui retire ce rôle.
- * Une ligue garde toujours au moins un administrateur.
+ * Seul le propriétaire de la ligue peut le faire, et son propre rôle ne change jamais.
+ * @param {{ ligue: { id: number }, estProprietaire: boolean }} demandeur
  */
-export async function changerRole(ligueId, utilisateurId, admin) {
-	return transaction(async (c) => {
-		const { rows: membres } = await c.query('SELECT utilisateur_id, role FROM membre_ligue WHERE ligue_id = $1 FOR UPDATE', [ligueId]);
-		const cible = membres.find((m) => m.utilisateur_id === utilisateurId);
-		if (!cible) throw new ErreurSaisie('Ce membre ne fait pas partie de la ligue.');
-		if (!admin && cible.role === 'admin' && membres.filter((m) => m.role === 'admin').length === 1)
-			throw new ErreurSaisie('La ligue doit garder au moins un administrateur. Nomme d’abord quelqu’un d’autre.');
-		await c.query('UPDATE membre_ligue SET role = $3 WHERE ligue_id = $1 AND utilisateur_id = $2', [ligueId, utilisateurId, admin ? 'admin' : 'membre']);
-	});
+export async function changerRole(demandeur, utilisateurId, admin) {
+	if (!demandeur.estProprietaire) throw new ErreurSaisie('Seul le propriétaire de la ligue peut nommer ou retirer des administrateurs.');
+	const [cible] = await requete('SELECT role FROM membre_ligue WHERE ligue_id = $1 AND utilisateur_id = $2', [demandeur.ligue.id, utilisateurId]);
+	if (!cible) throw new ErreurSaisie('Ce membre ne fait pas partie de la ligue.');
+	if (cible.role === 'proprietaire') throw new ErreurSaisie('Le rôle du propriétaire ne peut pas être modifié.');
+	await requete('UPDATE membre_ligue SET role = $3 WHERE ligue_id = $1 AND utilisateur_id = $2', [demandeur.ligue.id, utilisateurId, admin ? 'admin' : 'membre']);
 }
 
 /** Erreur de saisie à montrer telle quelle à l'administrateur */

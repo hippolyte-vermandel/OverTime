@@ -90,6 +90,7 @@
 			aConfirmer = null;
 		};
 	};
+	const ROLES = { proprietaire: ', propriétaire', admin: ', administrateur', membre: '' };
 	const lien = $derived(data.code ? `${typeof location !== 'undefined' ? location.origin : ''}/inscription?code=${data.code}` : '');
 	let copie = $state(false);
 	async function copier() {
@@ -259,12 +260,13 @@
 
 		<section class="carte" aria-labelledby="t-membres">
 			<h2 id="t-membres">Membres ({data.membres.length})</h2>
+			<p class="aide">{data.joueur.estProprietaire ? 'Tu es propriétaire : toi seul peux nommer ou retirer des administrateurs.' : 'Seul le propriétaire de la ligue peut nommer ou retirer des administrateurs.'}</p>
 			<ul class="membres">
 				{#each data.membres as m (m.id)}
 					<li>
 						<span class="avatar" aria-hidden="true">{m.pseudo.charAt(0).toUpperCase()}</span>
 						<div class="qui">
-							<span class="pseudo">{m.pseudo}{m.role === 'admin' ? ', administrateur' : ''}</span>
+							<span class="pseudo">{m.pseudo}{ROLES[m.role]}</span>
 							<span class="meta">{formatNombre(m.solde)} noxus</span>
 						</div>
 						{#if aConfirmer === `mdp:${m.id}` || aConfirmer === `role:${m.id}`}
@@ -278,8 +280,10 @@
 							</form>
 						{:else}
 							<div class="actions-membre">
-								<button class="discret" onclick={() => (aConfirmer = `role:${m.id}`)} aria-label={m.role === 'admin' ? `Retirer le rôle d’administrateur à ${m.pseudo}` : `Nommer ${m.pseudo} administrateur`}>{m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}</button>
-								{#if m.a_un_compte}
+								{#if data.joueur.estProprietaire && m.role !== 'proprietaire'}
+									<button class="discret" onclick={() => (aConfirmer = `role:${m.id}`)} aria-label={m.role === 'admin' ? `Retirer le rôle d’administrateur à ${m.pseudo}` : `Nommer ${m.pseudo} administrateur`}>{m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}</button>
+								{/if}
+								{#if m.a_un_compte && (data.joueur.estProprietaire || m.role === 'membre' || m.id === data.joueur.id)}
 									<button class="discret" onclick={() => (aConfirmer = `mdp:${m.id}`)} aria-label="Réinitialiser le mot de passe de {m.pseudo}">Mot de passe</button>
 								{/if}
 							</div>
