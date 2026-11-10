@@ -142,6 +142,14 @@
 			</div>
 		</section>
 	{/each}
+
+	{#if data.sources?.length}
+		<p class="credits">
+			Matchs et résultats :
+			{#each data.sources as s, i (s.code)}{#if i > 0}, {/if}{#if s.lien}<a href={s.lien} target="_blank" rel="noopener">{s.nom}</a>{:else}{s.nom}{/if}{/each}
+			({data.sources[0].licence ?? 'CC BY-SA 3.0'}), et les admins de la ligue.
+		</p>
+	{/if}
 </div>
 
 {#if data.joueur?.ligue}
@@ -290,6 +298,15 @@
 		text-align: center;
 		font-size: 14px;
 		color: var(--texte-discret);
+	}
+	.credits {
+		margin: 20px 6px 0;
+		font-size: 12px;
+		line-height: 1.5;
+		color: var(--texte-discret);
+	}
+	.credits a {
+		color: var(--texte-doux);
 	}
 	.erreur {
 		color: var(--rouge-perte);

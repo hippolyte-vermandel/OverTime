@@ -53,3 +53,14 @@ export async function prochainsMatchs(limite = 200) {
 		};
 	});
 }
+
+/** Sources automatiques dont des matchs sont dans la base, pour les citer (licence CC BY-SA) */
+const LIENS = { leaguepedia: 'https://lol.fandom.com', liquipedia: 'https://liquipedia.net' };
+export async function sourcesCitees() {
+	const lignes = await requete(
+		`SELECT so.code, so.nom, so.licence FROM source so
+		  WHERE EXISTS (SELECT 1 FROM identifiant_externe ie WHERE ie.source_id = so.id)
+		  ORDER BY so.nom`
+	);
+	return lignes.map((l) => ({ ...l, lien: LIENS[l.code] ?? null }));
+}

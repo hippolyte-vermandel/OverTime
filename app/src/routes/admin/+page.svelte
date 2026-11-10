@@ -198,6 +198,34 @@
 				<button type="submit" class="principal" disabled={envoi}>{envoi ? 'Ajout…' : dejaJoue ? 'Ajouter à l’historique' : 'Ajouter le match'}</button>
 			</form>
 		</section>
+
+		<section class="carte" aria-labelledby="t-import">
+			<h2 id="t-import">Matchs importés automatiquement</h2>
+			<p class="aide">Toutes les heures, le serveur ajoute les prochains matchs, met à jour les horaires et valide les résultats. « Aperçu » montre ce qui serait importé sans rien enregistrer.</p>
+			{#each data.sources as s (s.cle)}
+				<div class="source">
+					<div class="infos">
+						<span class="jeu-source">{s.jeu}</span>
+						<span class="meta">Données <a href={s.lien} target="_blank" rel="noopener">{s.nom}</a>{s.active ? '' : ', en attente de la clé'}</span>
+						{#if s.dernier}<span class="meta" class:echec={s.dernier.erreur}>{s.dernier.texte}</span>{/if}
+					</div>
+					{#if s.active}
+						<form method="POST" action="?/importer" use:enhance={soumettre} class="boutons-source">
+							<input type="hidden" name="source" value={s.cle} />
+							<button type="submit" name="apercu" value="oui" class="discret" disabled={envoi}>Aperçu</button>
+							<button type="submit" name="apercu" value="non" class="principal" disabled={envoi}>{envoi ? 'Import…' : 'Importer'}</button>
+						</form>
+					{:else}
+						<p class="aide">Ajoute <code>LPDB_API_KEY</code> dans le fichier <code>.env</code> puis relance le serveur.</p>
+					{/if}
+				</div>
+			{/each}
+			{#if form?.action === 'importer' && form?.exemples?.length}
+				<ul class="exemples">
+					{#each form.exemples as e (e)}<li>{e}</li>{/each}
+				</ul>
+			{/if}
+		</section>
 	{:else if onglet === 'resultats'}
 		<section aria-labelledby="t-resultats" class="liste">
 			<h2 id="t-resultats" class="visuellement-cache">Résultats à valider</h2>
@@ -356,6 +384,40 @@
 		font-size: 12px;
 		line-height: 1.4;
 		color: var(--texte-discret);
+	}
+	.source {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding-top: 12px;
+		border-top: 1px solid var(--surface-active);
+	}
+	.infos {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.jeu-source {
+		font-size: 15px;
+		font-weight: 600;
+	}
+	.infos a {
+		color: var(--texte-doux);
+	}
+	.meta.echec {
+		color: var(--rouge-perte);
+	}
+	form.boutons-source {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+	.exemples {
+		margin: 0;
+		padding-left: 18px;
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--texte-doux);
 	}
 	.erreur,
 	.succes {

@@ -4,6 +4,8 @@
 // verse jamais deux fois : on peut donc la lancer souvent sans risque.
 import { requete } from './db.js';
 import { noterTousLesRangs } from './paris.js';
+import { toutImporter } from './import/index.js';
+import { IMPORT_AUTO } from '$app/env/private';
 
 const UNE_HEURE = 60 * 60 * 1000;
 let lancee = false;
@@ -28,8 +30,20 @@ export async function releverRangs() {
 	}
 }
 
+// Import des matchs (Leaguepedia, et Liquipedia si une clé est configurée) : nouveaux matchs,
+// résultats, changements d'horaire. Le rang est relevé après, pour compter les paris réglés.
+async function importerMatchs() {
+	if (String(IMPORT_AUTO).toLowerCase() === 'non') return;
+	try {
+		await toutImporter();
+	} catch (e) {
+		console.error('Import des matchs impossible pour l’instant :', e.message);
+	}
+}
+
 async function tourDeTaches() {
 	await verserRecharges();
+	await importerMatchs();
 	await releverRangs();
 }
 

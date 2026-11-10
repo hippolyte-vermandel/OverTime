@@ -194,10 +194,22 @@ du tunnel.
 
 ## Sources des données
 
-Pour l'instant, les matchs sont saisis à la main par l'administrateur de la ligue.
-Sources envisagées : [Liquipedia](https://liquipedia.net) (accès API demandé),
-[Leaguepedia](https://lol.fandom.com) pour League of Legends. Leurs contenus sont sous
-licence CC-BY-SA et seront cités dans l'application.
+Les matchs arrivent de deux façons. Toutes les heures, le serveur importe tout seul les
+prochains matchs, les changements d'horaire et les résultats depuis :
+
+- [Leaguepedia](https://lol.fandom.com) pour **League of Legends**, sans clé. Les
+  régions suivies se règlent avec `LEAGUEPEDIA_REGIONS` dans le `.env` ;
+- [Liquipedia](https://liquipedia.net/valorant) pour **VALORANT**, avec une clé personnelle
+  (`LPDB_API_KEY` dans le `.env`, à ne jamais publier). L'offre gratuite de Liquipedia
+  couvre un seul jeu, à condition que le code reste ouvert.
+
+Pour les autres jeux, un admin saisit les matchs à la main. Il peut aussi lancer un import
+ou un aperçu depuis **Administration > Ajouter > Matchs importés automatiquement**.
+Un match reporté de plus de 48 h est annulé et les mises sont remboursées. Il revient
+ensuite au prochain import, à sa nouvelle date.
+
+Les données de Leaguepedia et de Liquipedia sont sous licence CC BY-SA 3.0. Elles sont
+citées, avec un lien, en bas de l'écran Matchs.
 
 OverTime n'est affilié à aucun éditeur de jeu ni organisateur de compétition.
 
