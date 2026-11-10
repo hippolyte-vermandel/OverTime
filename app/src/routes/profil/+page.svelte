@@ -26,6 +26,13 @@
 		</section>
 	{/if}
 
+	{#if j.role === 'admin'}
+		<a class="lien-admin" href="/admin">
+			<span><span class="titre-lien">Administration</span><span class="sous">Ajouter des matchs, valider les résultats, gérer les membres</span></span>
+			<span aria-hidden="true">›</span>
+		</a>
+	{/if}
+
 	<p class="bientot">Statistiques, saisons passées, règles du jeu et invitations arrivent bientôt.</p>
 
 	<form method="POST" action="/deconnexion">
@@ -97,6 +104,33 @@
 		border-radius: 20px;
 		border: 1px dashed var(--surface-active);
 		font-size: 14px;
+		color: var(--texte-discret);
+	}
+	.lien-admin {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		min-height: 56px;
+		padding: 8px 14px;
+		border-radius: 20px;
+		background: var(--surface-gradin);
+		border: 1px solid var(--surface-active);
+		text-decoration: none;
+		font-size: 18px;
+		color: var(--texte-discret);
+	}
+	.lien-admin > span:first-child {
+		display: flex;
+		flex-direction: column;
+	}
+	.titre-lien {
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--texte-principal);
+	}
+	.sous {
+		font-size: 12px;
 		color: var(--texte-discret);
 	}
 	.deconnexion {
