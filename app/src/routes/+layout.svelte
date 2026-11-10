@@ -21,83 +21,94 @@
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.webmanifest" />
 	<link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
-	<meta name="theme-color" content="#0b0e14" />
+	<meta name="theme-color" content="#0c0c12" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="OverTime" />
 </svelte:head>
 
-<header class="entete">
-	<span class="logo" aria-label="OverTime">Over<span>Time</span></span>
-	<span class="solde" title="Ton solde de la saison">
-		<span class="visuellement-cache">Solde :</span>— <span class="unite">NX</span>
-	</span>
-</header>
+<div class="app">
+	<header class="entete">
+		<span class="logo" aria-label="OverTime">Over<span>Time</span></span>
+		<!-- Le solde viendra du compte de l'utilisateur (comptes en préparation) -->
+		<span class="solde" aria-label="Solde : bientôt disponible">—<span class="unite">noxus</span></span>
+	</header>
 
-<main>
-	{@render children()}
-</main>
+	<main>
+		{@render children()}
+	</main>
+</div>
 
 <nav class="onglets" aria-label="Navigation principale">
 	{#each onglets as o (o.href)}
 		<a href={o.href} aria-current={actif(o.href) ? 'page' : undefined}>
-			<svg viewBox="0 0 24 24" aria-hidden="true"><path d={o.icone} /></svg>
+			<span class="pastille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={o.icone} /></svg></span>
 			<span>{o.titre}</span>
 		</a>
 	{/each}
 </nav>
 
 <style>
+	.app {
+		max-width: 640px;
+		margin: 0 auto;
+	}
 	.entete {
-		position: sticky;
-		top: 0;
-		z-index: 10;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: calc(env(safe-area-inset-top) + 12px) 18px 12px;
-		background: rgb(11 14 20 / 0.85);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		border-bottom: 1px solid var(--bord);
+		padding: calc(env(safe-area-inset-top) + 14px) 20px 6px;
 	}
+	/* Logo : OVER en blanc, TIME dans son cadre magenta incliné */
 	.logo {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 21px;
 		font-weight: 800;
-		font-size: 1.25rem;
-		letter-spacing: -0.02em;
+		font-style: italic;
+		letter-spacing: -0.01em;
+		text-transform: uppercase;
+		line-height: 1;
 	}
 	.logo span {
-		color: var(--accent);
+		display: inline-block;
+		padding: 3px 8px 4px;
+		border-radius: 6px;
+		background: var(--magenta-arene);
+		color: var(--nuit-arene);
+		transform: skewX(-10deg);
 	}
 	.solde {
-		font-family: var(--chiffres);
-		font-weight: 600;
+		display: flex;
+		align-items: baseline;
+		gap: 5px;
 		padding: 6px 12px;
-		border-radius: 999px;
-		background: var(--surface-2);
-		border: 1px solid var(--bord);
+		border-radius: 10px;
+		background: var(--surface-gradin);
+		border: 1px solid var(--surface-active);
+		font-weight: 700;
+		font-size: 18px;
 	}
 	.unite {
-		color: var(--texte-2);
-		font-size: 0.8em;
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--texte-discret);
 	}
 
 	main {
-		max-width: 640px;
-		margin: 0 auto;
-		padding: 8px 14px calc(env(safe-area-inset-bottom) + 90px);
+		padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
 	}
 
 	.onglets {
 		position: fixed;
 		inset: auto 0 0 0;
+		z-index: 20;
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		padding: 6px 4px calc(env(safe-area-inset-bottom) + 6px);
-		background: var(--surface);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		border-top: 1px solid var(--bord);
+		padding: 6px 4px calc(env(safe-area-inset-bottom) + 8px);
+		background: var(--surface-gradin);
+		border-top: 1px solid var(--surface-active);
 	}
 	.onglets a {
 		display: flex;
@@ -106,21 +117,32 @@
 		gap: 3px;
 		min-height: 48px;
 		padding-top: 4px;
-		font-size: 0.7rem;
+		font-size: 11px;
 		font-weight: 600;
-		color: var(--texte-2);
+		color: var(--texte-discret);
 		text-decoration: none;
 	}
+	.pastille {
+		display: grid;
+		place-items: center;
+		width: 54px;
+		height: 28px;
+		border-radius: 14px;
+	}
 	.onglets svg {
-		width: 24px;
-		height: 24px;
+		width: 22px;
+		height: 22px;
 		fill: none;
 		stroke: currentColor;
 		stroke-width: 1.8;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
+	/* Onglet actif : blanc sur pastille, jamais magenta */
 	.onglets a[aria-current='page'] {
-		color: var(--accent-fort);
+		color: var(--texte-principal);
+	}
+	.onglets a[aria-current='page'] .pastille {
+		background: var(--surface-active);
 	}
 </style>
