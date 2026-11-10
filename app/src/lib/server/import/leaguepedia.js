@@ -128,7 +128,7 @@ export async function lireEquipes(noms, chercher = fetch) {
 		const r = await chercher(adresseEquipes(uniques.slice(i, i + EQUIPES_PAR_REQUETE)), { headers: { 'User-Agent': AGENT, Accept: 'application/json' } });
 		if (!r.ok) throw new Error(`Leaguepedia (équipes) a répondu ${r.status}`);
 		const lignes = await r.json();
-		if (!Array.isArray(lignes)) continue;
+		if (!Array.isArray(lignes)) throw new Error(lignes?.error?.info ?? 'réponse inattendue pour les équipes');
 		for (const l of lignes) {
 			const fiche = { sigle: lire(l, 'Sigle') || null, logo: adresseLogo(lire(l, 'Image')) };
 			for (const cle of [lire(l, 'Page'), lire(l, 'Nom')]) if (cle) fiches.set(String(cle).toLowerCase(), fiche);
