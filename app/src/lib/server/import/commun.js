@@ -58,14 +58,19 @@ const noter = (sourceId, idExterne, serieId) =>
 // du nom ; un logo déjà présent (choisi par un admin, par exemple) n'est jamais écrasé.
 const sigleOk = (s) => (typeof s === 'string' && /^[\p{L}\p{N}.]{1,6}$/u.test(s.trim()) ? s.trim().toUpperCase() : null);
 const logoOk = (u) => (typeof u === 'string' && /^https:\/\/[^\s"'<>]+$/.test(u) ? u : null);
+// Première version de l'import LoL : des liens Special:FilePath que les navigateurs n'affichent pas
+const ANCIEN_LOGO = 'https://lol.fandom.com/wiki/Special:FilePath/%';
 async function completerEquipe(nom, sigle, logo) {
 	const s = sigleOk(sigle);
 	const l = logoOk(logo);
 	if (!s && !l) return;
 	await requete(
-		`UPDATE equipe SET sigle = coalesce($2, sigle), logo_url = coalesce(logo_url, $3)
-		  WHERE lower(nom) = lower($1) AND (($2::text IS NOT NULL AND sigle IS DISTINCT FROM $2) OR (logo_url IS NULL AND $3::text IS NOT NULL))`,
-		[nom, s, l]
+		`UPDATE equipe SET sigle = coalesce($2, sigle),
+		        logo_url = CASE WHEN logo_url IS NULL OR logo_url LIKE $4 THEN coalesce($3, logo_url) ELSE logo_url END
+		  WHERE lower(nom) = lower($1)
+		    AND (($2::text IS NOT NULL AND sigle IS DISTINCT FROM $2)
+		      OR ($3::text IS NOT NULL AND (logo_url IS NULL OR (logo_url LIKE $4 AND logo_url <> $3))))`,
+		[nom, s, l, ANCIEN_LOGO]
 	);
 }
 

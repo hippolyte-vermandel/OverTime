@@ -102,8 +102,44 @@ export function versMatch(ligne) {
 // --- Équipes : sigle officiel et logo (table Cargo « Teams ») ---
 const EQUIPES_PAR_REQUETE = 40;
 
-/** Adresse du logo d'une équipe : Special:FilePath redirige vers l'image, ici en 96 px */
-export const adresseLogo = (fichier) => (fichier ? `https://lol.fandom.com/wiki/Special:FilePath/${encodeURIComponent(String(fichier).trim())}?width=96` : null);
+const API = 'https://lol.fandom.com/api.php';
+const FICHIERS_PAR_REQUETE = 50; // maximum de l'API MediaWiki
+
+/** Adresse de la requête qui donne l'URL directe (miniature de 96 px) de chaque fichier image */
+export function adresseImages(fichiers) {
+	const p = new URLSearchParams({
+		action: 'query',
+		format: 'json',
+		prop: 'imageinfo',
+		iiprop: 'url',
+		iiurlwidth: '96',
+		titles: fichiers.map((f) => `File:${f}`).join('|')
+	});
+	return `${API}?${p}`;
+}
+
+// MediaWiki écrit les titres avec des espaces et une majuscule initiale
+const titreFichier = (f) => {
+	const t = String(f).trim().replace(/_/g, ' ');
+	return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+/** URL directe des images (hébergées par Fandom), par nom de fichier */
+export async function lireImages(fichiers, chercher = fetch) {
+	const urls = new Map();
+	const uniques = [...new Set(fichiers.filter(Boolean).map(titreFichier))];
+	for (let i = 0; i < uniques.length; i += FICHIERS_PAR_REQUETE) {
+		const r = await chercher(adresseImages(uniques.slice(i, i + FICHIERS_PAR_REQUETE)), { headers: { 'User-Agent': AGENT, Accept: 'application/json' } });
+		if (!r.ok) throw new Error(`Leaguepedia (images) a répondu ${r.status}`);
+		const corps = await r.json();
+		for (const page of Object.values(corps?.query?.pages ?? {})) {
+			const info = /** @type {any} */ (page)?.imageinfo?.[0];
+			const url = info?.thumburl ?? info?.url;
+			if (url && /** @type {any} */ (page).title) urls.set(String(/** @type {any} */ (page).title).replace(/^File:/, ''), url);
+		}
+	}
+	return urls;
+}
 
 export function adresseEquipes(noms) {
 	const liste = noms.map(sql).join(', ');
@@ -130,9 +166,15 @@ export async function lireEquipes(noms, chercher = fetch) {
 		const lignes = await r.json();
 		if (!Array.isArray(lignes)) throw new Error(lignes?.error?.info ?? 'réponse inattendue pour les équipes');
 		for (const l of lignes) {
-			const fiche = { sigle: lire(l, 'Sigle') || null, logo: adresseLogo(lire(l, 'Image')) };
+			const fiche = { sigle: lire(l, 'Sigle') || null, fichier: lire(l, 'Image') || null, logo: /** @type {string | null} */ (null) };
 			for (const cle of [lire(l, 'Page'), lire(l, 'Nom')]) if (cle) fiches.set(String(cle).toLowerCase(), fiche);
 		}
+	}
+	// Les logos : l'adresse directe de chaque image, en une ou deux requêtes
+	const avecImage = [...new Set(fiches.values())].filter((f) => f.fichier);
+	if (avecImage.length) {
+		const urls = await lireImages(avecImage.map((f) => f.fichier), chercher);
+		for (const f of avecImage) f.logo = urls.get(titreFichier(f.fichier)) ?? null;
 	}
 	return fiches;
 }

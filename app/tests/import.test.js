@@ -113,14 +113,17 @@ test('Leaguepedia : sigles et logos des équipes', async () => {
 		const u = new URL(url);
 		if (u.searchParams.get('tables') === 'Teams')
 			return { ok: true, status: 200, json: async () => [{ Nom: 'Gen.G', Page: 'Gen.G', Sigle: 'GEN', Image: 'Gen.Glogo square.png' }, { Nom: 'Bilibili Gaming', Page: 'Bilibili Gaming', Sigle: 'BLG', Image: '' }] };
+		if (u.pathname === '/api.php')
+			return { ok: true, status: 200, json: async () => ({ query: { pages: { 12: { title: 'File:Gen.Glogo square.png', imageinfo: [{ url: 'https://static.wikia.nocookie.net/lolesports_gamepedia_en/images/a/ab/Gen.Glogo_square.png', thumburl: 'https://static.wikia.nocookie.net/lolesports_gamepedia_en/images/a/ab/Gen.Glogo_square.png/revision/latest/scale-to-width-down/96' }] } } } }) };
 		return { ok: true, status: 200, json: async () => [{ MatchId: 'w1', Team1: 'Bilibili Gaming', Team2: 'Gen.G', BestOf: '5', Quand: '2026-11-12 09:00:00', Winner: '', Tournoi: 'Worlds 2026 Main Event', Region: 'International' }] };
 	};
 	const [m] = await lp.lireMatchs({ depuis: new Date(), jusqua: new Date(), regions: ['International'], chercher });
-	assert.equal(adresses.length, 2, 'une requête de matchs, une d’équipes');
+	assert.equal(adresses.length, 3, 'matchs, équipes, puis adresses des images');
+	assert.equal(new URL(adresses[2]).searchParams.get('titles'), 'File:Gen.Glogo square.png');
 	assert.equal(m.sigleA, 'BLG');
 	assert.equal(m.logoA, null, 'pas d’image : blason neutre');
 	assert.equal(m.sigleB, 'GEN');
-	assert.equal(m.logoB, 'https://lol.fandom.com/wiki/Special:FilePath/Gen.Glogo%20square.png?width=96');
+	assert.equal(m.logoB, 'https://static.wikia.nocookie.net/lolesports_gamepedia_en/images/a/ab/Gen.Glogo_square.png/revision/latest/scale-to-width-down/96');
 	assert.match(new URL(adresses[1]).searchParams.get('where'), /'Gen\.G'/);
 });
 
