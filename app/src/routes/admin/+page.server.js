@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import {
 	jeuxDuels,
 	referentiel,
@@ -11,6 +11,7 @@ import {
 	membres,
 	codeInvitation,
 	reinitialiserMotDePasse,
+	changerRole,
 	ErreurSaisie
 } from '#lib/server/admin.js';
 
@@ -95,6 +96,21 @@ export const actions = {
 		} catch (e) {
 			return echec(e, 'resultat');
 		}
+	},
+
+	role: async ({ request, locals }) => {
+		const j = exigerAdmin(locals);
+		const f = await request.formData();
+		const id = Number(f.get('utilisateur'));
+		const admin = f.get('admin') === 'oui';
+		try {
+			await changerRole(j.ligue.id, id, admin);
+		} catch (e) {
+			return echec(e, 'membres');
+		}
+		// Qui se retire lui-même le rôle n'a plus accès à cette page
+		if (id === j.id && !admin) redirect(303, '/profil');
+		return { action: 'membres', succes: admin ? 'Nouvel administrateur nommé.' : 'Rôle d’administrateur retiré.' };
 	},
 
 	motDePasse: async ({ request, locals }) => {

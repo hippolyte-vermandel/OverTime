@@ -267,16 +267,22 @@
 							<span class="pseudo">{m.pseudo}{m.role === 'admin' ? ', administrateur' : ''}</span>
 							<span class="meta">{formatNombre(m.solde)} noxus</span>
 						</div>
-						{#if m.a_un_compte}
-							{#if aConfirmer === `mdp:${m.id}`}
-								<form method="POST" action="?/motDePasse" use:enhance={soumettre} class="mdp-confirmer">
-									<input type="hidden" name="utilisateur" value={m.id} />
-									<button type="button" class="discret" onclick={() => (aConfirmer = null)}>Retour</button>
-									<button type="submit" class="principal petit" disabled={envoi}>Confirmer</button>
-								</form>
-							{:else}
-								<button class="discret" onclick={() => (aConfirmer = `mdp:${m.id}`)} aria-label="Réinitialiser le mot de passe de {m.pseudo}">Mot de passe</button>
-							{/if}
+						{#if aConfirmer === `mdp:${m.id}` || aConfirmer === `role:${m.id}`}
+							{@const role = aConfirmer.startsWith('role')}
+							<form method="POST" action={role ? '?/role' : '?/motDePasse'} use:enhance={soumettre} class="actions-membre">
+								<input type="hidden" name="utilisateur" value={m.id} />
+								{#if role}<input type="hidden" name="admin" value={m.role === 'admin' ? 'non' : 'oui'} />{/if}
+								<span class="question-membre">{role ? (m.role === 'admin' ? `Retirer le rôle d’administrateur à ${m.pseudo} ?` : `Nommer ${m.pseudo} administrateur ?`) : `Nouveau mot de passe pour ${m.pseudo} ?`}</span>
+								<button type="button" class="discret" onclick={() => (aConfirmer = null)}>Retour</button>
+								<button type="submit" class="principal petit" disabled={envoi}>Confirmer</button>
+							</form>
+						{:else}
+							<div class="actions-membre">
+								<button class="discret" onclick={() => (aConfirmer = `role:${m.id}`)} aria-label={m.role === 'admin' ? `Retirer le rôle d’administrateur à ${m.pseudo}` : `Nommer ${m.pseudo} administrateur`}>{m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}</button>
+								{#if m.a_un_compte}
+									<button class="discret" onclick={() => (aConfirmer = `mdp:${m.id}`)} aria-label="Réinitialiser le mot de passe de {m.pseudo}">Mot de passe</button>
+								{/if}
+							</div>
 						{/if}
 					</li>
 				{/each}
@@ -609,10 +615,35 @@
 		list-style: none;
 	}
 	.membres li {
-		display: flex;
+		display: grid;
+		grid-template-columns: 36px 1fr;
 		align-items: center;
-		gap: 12px;
-		min-height: 56px;
+		column-gap: 12px;
+		row-gap: 8px;
+		padding: 8px 0;
+		border-bottom: 1px solid var(--surface-active);
+	}
+	.membres li:last-child {
+		border-bottom: none;
+	}
+	.actions-membre {
+		grid-column: 2;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+	.actions-membre .discret,
+	.actions-membre .principal {
+		min-height: 44px;
+		padding: 0 12px;
+		font-size: 14px;
+	}
+	.question-membre {
+		flex-basis: 100%;
+		font-size: 14px;
+		color: var(--texte-doux);
 	}
 	.avatar {
 		display: grid;
@@ -633,13 +664,5 @@
 	.pseudo {
 		font-size: 15px;
 		font-weight: 600;
-	}
-	.mdp-confirmer {
-		flex-direction: row;
-		gap: 6px;
-	}
-	.mdp-confirmer .discret {
-		min-height: 44px;
-		padding: 0 10px;
 	}
 </style>
