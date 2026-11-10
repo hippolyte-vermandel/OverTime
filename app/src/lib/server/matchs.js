@@ -55,7 +55,7 @@ export async function prochainsMatchs(limite = 200) {
 }
 
 /** Sources automatiques dont des matchs sont dans la base, pour les citer (licence CC BY-SA) */
-const LIENS = { leaguepedia: 'https://lol.fandom.com', liquipedia: 'https://liquipedia.net' };
+const LIENS = { leaguepedia: 'https://lol.fandom.com', liquipedia: 'https://liquipedia.net', pandascore: 'https://pandascore.co' };
 export async function sourcesCitees() {
 	const lignes = await requete(
 		`SELECT so.code, so.nom, so.licence FROM source so

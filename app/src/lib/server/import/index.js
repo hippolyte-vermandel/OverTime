@@ -1,11 +1,12 @@
 // Lancement des imports automatiques : par la tâche horaire du serveur, ou par le bouton
 // « Importer maintenant » de l'administration. Un seul import tourne à la fois.
-import { LPDB_API_KEY, LPDB_TIERS, LEAGUEPEDIA_REGIONS } from '$app/env/private';
+import { LPDB_API_KEY, LPDB_TIERS, LEAGUEPEDIA_REGIONS, PANDASCORE_TOKEN } from '$app/env/private';
 import { requete } from '../db.js';
 import { preparerSource, rangerMatchs, resumer } from './commun.js';
 import { equipeConnue } from './outils.js';
 import * as leaguepedia from './leaguepedia.js';
 import * as lpdb from './lpdb.js';
+import * as pandascore from './pandascore.js';
 
 const JOUR = 86_400_000;
 const liste = (v) => String(v ?? '').split(',').map((x) => x.trim()).filter(Boolean);
@@ -15,7 +16,8 @@ const chercher = (url, opts) => fetch(url, { ...opts, signal: AbortSignal.timeou
 /** Les sources, telles que l'administration les affiche */
 export const SOURCES = [
 	{ cle: 'leaguepedia', jeu: 'League of Legends', nom: 'Leaguepedia', lien: 'https://lol.fandom.com', active: () => true },
-	{ cle: 'liquipedia', jeu: 'VALORANT', nom: 'Liquipedia', lien: 'https://liquipedia.net/valorant', active: () => String(LPDB_API_KEY ?? '').trim() !== '' }
+	{ cle: 'liquipedia', jeu: 'VALORANT', nom: 'Liquipedia', lien: 'https://liquipedia.net/valorant', active: () => String(LPDB_API_KEY ?? '').trim() !== '', variable: 'LPDB_API_KEY' },
+	{ cle: 'pandascore', jeu: 'Rocket League et Call of Duty', nom: 'PandaScore', lien: 'https://pandascore.co', active: () => String(PANDASCORE_TOKEN ?? '').trim() !== '', variable: 'PANDASCORE_TOKEN' }
 ];
 
 // Premier import d'une source : on remonte 120 jours pour que le moteur de cotes ait un
@@ -28,9 +30,15 @@ async function fenetre(sourceId) {
 
 async function lire(cle, f) {
 	if (cle === 'leaguepedia') return leaguepedia.lireMatchs({ ...f, regions: liste(LEAGUEPEDIA_REGIONS), chercher });
+	if (cle === 'pandascore') return pandascore.lireMatchs({ ...f, cle: String(PANDASCORE_TOKEN ?? '').trim(), chercher });
 	return lpdb.lireMatchs({ ...f, cle: String(LPDB_API_KEY ?? '').trim(), niveaux: liste(LPDB_TIERS), chercher });
 }
-const module = (cle) => (cle === 'leaguepedia' ? leaguepedia : lpdb);
+// La source et les jeux qu'elle alimente
+function decrire(cle) {
+	if (cle === 'leaguepedia') return { source: leaguepedia.SOURCE, jeux: [leaguepedia.JEU] };
+	if (cle === 'pandascore') return { source: pandascore.SOURCE, jeux: pandascore.JEUX };
+	return { source: lpdb.SOURCE, jeux: [lpdb.JEU] };
+}
 
 /** Dernier résultat de chaque source (en mémoire), pour l'administration */
 export const derniers = /** @type {Record<string, { quand: Date, texte: string, erreur: boolean }>} */ ({});
@@ -38,14 +46,14 @@ let enCours = false;
 
 /**
  * Importe une source. Avec apercu = true, rien n'est écrit : on renvoie ce qui serait importé.
- * @param {'leaguepedia' | 'liquipedia'} cle
+ * @param {'leaguepedia' | 'liquipedia' | 'pandascore'} cle
  */
 export async function importer(cle, { apercu = false } = {}) {
 	const src = SOURCES.find((s) => s.cle === cle);
 	if (!src) throw new Error('Source inconnue');
-	if (!src.active()) return { texte: `${src.jeu} : pas encore de clé Liquipedia. Ajoute LPDB_API_KEY dans le fichier .env puis relance le serveur.`, erreur: true };
-	const m = module(cle);
-	const sourceId = await preparerSource(m.SOURCE, m.JEU);
+	if (!src.active()) return { texte: `${src.jeu} : pas encore de clé ${src.nom}. Ajoute ${src.variable} dans le fichier .env puis relance le serveur.`, erreur: true };
+	const d = decrire(cle);
+	const sourceId = await preparerSource(d.source, d.jeux);
 	const f = await fenetre(sourceId);
 	const matchs = await lire(cle, f);
 

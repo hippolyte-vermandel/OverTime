@@ -33,7 +33,7 @@ export async function load({ locals }) {
 		membres(j.ligue.id),
 		codeInvitation(j.ligue.id)
 	]);
-	const sources = SOURCES.map((s) => ({ cle: s.cle, jeu: s.jeu, nom: s.nom, lien: s.lien, active: s.active(), dernier: derniers[s.cle] ?? null }));
+	const sources = SOURCES.map((s) => ({ cle: s.cle, jeu: s.jeu, nom: s.nom, lien: s.lien, variable: s.variable ?? null, active: s.active(), dernier: derniers[s.cle] ?? null }));
 	return { jeux, ...ref, resultats, membres: liste, code, sources };
 }
 

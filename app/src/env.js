@@ -21,6 +21,10 @@ export const variables = defineEnvVars({
 		description: "Clé de l'API Liquipedia (VALORANT). Vide : l'import VALORANT est désactivé. Ne jamais la publier.",
 		schema: (valeur) => valeur ?? ''
 	},
+	PANDASCORE_TOKEN: {
+		description: "Clé de l'API PandaScore (Rocket League, Call of Duty). Vide : import désactivé. Ne jamais la publier.",
+		schema: (valeur) => valeur ?? ''
+	},
 	LPDB_TIERS: {
 		description: 'Niveaux Liquipedia importés, séparés par des virgules (1 = plus haut niveau)',
 		schema: (valeur) => valeur || '1'

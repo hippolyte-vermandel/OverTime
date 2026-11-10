@@ -201,15 +201,20 @@ prochains matchs, les changements d'horaire et les résultats depuis :
   régions suivies se règlent avec `LEAGUEPEDIA_REGIONS` dans le `.env` ;
 - [Liquipedia](https://liquipedia.net/valorant) pour **VALORANT**, avec une clé personnelle
   (`LPDB_API_KEY` dans le `.env`, à ne jamais publier). L'offre gratuite de Liquipedia
-  couvre un seul jeu, à condition que le code reste ouvert.
+  couvre un seul jeu, à condition que le code reste ouvert ;
+- [PandaScore](https://pandascore.co) pour **Rocket League** et **Call of Duty**, avec une clé
+  personnelle (`PANDASCORE_TOKEN` dans le `.env`, à ne jamais publier) et l'offre gratuite
+  « fixtures » (calendrier et résultats, sans direct).
+
+Une source sans clé reste inactive.
 
 Pour les autres jeux, un admin saisit les matchs à la main. Il peut aussi lancer un import
 ou un aperçu depuis **Administration > Ajouter > Matchs importés automatiquement**.
 Un match reporté de plus de 48 h est annulé et les mises sont remboursées. Il revient
 ensuite au prochain import, à sa nouvelle date.
 
-Les données de Leaguepedia et de Liquipedia sont sous licence CC BY-SA 3.0. Elles sont
-citées, avec un lien, en bas de l'écran Matchs.
+Les données de Leaguepedia et de Liquipedia sont sous licence CC BY-SA 3.0. Toutes les
+sources utilisées sont citées, avec un lien, en bas de l'écran Matchs.
 
 OverTime n'est affilié à aucun éditeur de jeu ni organisateur de compétition.
 

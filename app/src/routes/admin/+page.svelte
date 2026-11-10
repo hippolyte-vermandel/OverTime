@@ -216,7 +216,7 @@
 							<button type="submit" name="apercu" value="non" class="principal" disabled={envoi}>{envoi ? 'Import…' : 'Importer'}</button>
 						</form>
 					{:else}
-						<p class="aide">Ajoute <code>LPDB_API_KEY</code> dans le fichier <code>.env</code> puis relance le serveur.</p>
+						<p class="aide">Ajoute <code>{s.variable}</code> dans le fichier <code>.env</code> puis relance le serveur.</p>
 					{/if}
 				</div>
 			{/each}

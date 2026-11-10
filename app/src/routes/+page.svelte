@@ -146,8 +146,8 @@
 	{#if data.sources?.length}
 		<p class="credits">
 			Matchs et résultats :
-			{#each data.sources as s, i (s.code)}{#if i > 0}, {/if}{#if s.lien}<a href={s.lien} target="_blank" rel="noopener">{s.nom}</a>{:else}{s.nom}{/if}{/each}
-			({data.sources[0].licence ?? 'CC BY-SA 3.0'}), et les admins de la ligue.
+			{#each data.sources as s, i (s.code)}{#if i > 0}{', '}{/if}{#if s.lien}<a href={s.lien} target="_blank" rel="noopener">{s.nom}</a>{:else}{s.nom}{/if}{#if s.licence}&nbsp;({s.licence}){/if}{/each},
+			et les admins de la ligue.
 		</p>
 	{/if}
 </div>

@@ -25,10 +25,10 @@ import { equipeConnue, scoreValide } from './outils.js';
 const CINQ_MINUTES = 5 * 60 * 1000;
 const QUARANTE_HUIT_HEURES = 48 * 60 * 60 * 1000;
 
-/** Garantit que la source (avec sa licence, pour l'attribution) et le jeu existent */
-export async function preparerSource(source, jeu) {
+/** Garantit que la source (avec sa licence, pour l'attribution) et ses jeux existent */
+export async function preparerSource(source, jeux) {
 	await requete(`INSERT INTO source (code, nom, licence) VALUES ($1, $2, $3) ON CONFLICT (code) DO NOTHING`, [source.code, source.nom, source.licence]);
-	await requete(`INSERT INTO jeu (code, nom, format) VALUES ($1, $2, 'equipes') ON CONFLICT (code) DO NOTHING`, [jeu.code, jeu.nom]);
+	for (const jeu of jeux) await requete(`INSERT INTO jeu (code, nom, format) VALUES ($1, $2, 'equipes') ON CONFLICT (code) DO NOTHING`, [jeu.code, jeu.nom]);
 	const [s] = await requete('SELECT id FROM source WHERE code = $1', [source.code]);
 	return s.id;
 }
