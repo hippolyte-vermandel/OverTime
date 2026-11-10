@@ -8,6 +8,10 @@ import { DATABASE_URL } from '$app/env/private';
 // bien plus rapide que de se reconnecter à chaque page.
 export const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 5 });
 
+// Une connexion inactive coupée par la base (redémarrage de PostgreSQL...) ne doit pas
+// faire tomber le serveur : le pool en ouvrira une nouvelle à la prochaine requête.
+pool.on('error', (e) => console.error('Connexion à la base perdue :', e.message));
+
 // PostgreSQL renvoie les nombres décimaux (les cotes) sous forme de texte
 // pour ne perdre aucune précision ; ici on les veut en nombres JavaScript.
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, (v) => (v === null ? null : Number(v)));

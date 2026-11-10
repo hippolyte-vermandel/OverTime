@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Blason from '#lib/matchs/Blason.svelte';
 	import PictoJeu from '#lib/matchs/PictoJeu.svelte';
-	import { cleJour, formatHeure, formatNombre, nomJour } from '#lib/format.js';
+	import { cleJour, formatCote, formatHeure, formatNombre, nomJour } from '#lib/format.js';
 
 	let { data, form } = $props();
 
@@ -21,6 +21,63 @@
 	});
 	const competitionsDuJeu = $derived(data.competitions.filter((c) => c.jeu === jeu));
 	const demain = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+
+	// Champs suivis pour l'aperçu des cotes
+	let equipeA = $state('');
+	let equipeB = $state('');
+	let date = $state(demain);
+	let heure = $state('20:00');
+	let bestOf = $state('3');
+	let dejaJoue = $state(false);
+	let competition = $state('');
+	let region = $state('');
+	let phase = $state('');
+	$effect(() => {
+		if (form?.action === 'creer' && form?.valeurs) {
+			equipeA = form.valeurs.equipe_a ?? '';
+			equipeB = form.valeurs.equipe_b ?? '';
+			date = form.valeurs.date ?? demain;
+			heure = form.valeurs.heure ?? '20:00';
+			bestOf = form.valeurs.best_of ?? '3';
+			dejaJoue = form.valeurs.deja_joue === 'on';
+			competition = form.valeurs.competition ?? '';
+			region = form.valeurs.region ?? '';
+			phase = form.valeurs.phase ?? '';
+		}
+	});
+
+	// Aperçu des cotes calculées par le moteur, mis à jour pendant la saisie
+	let apercu = $state(/** @type {any} */ (null));
+	let calcul = $state(false);
+	$effect(() => {
+		const params = new URLSearchParams({ jeu, a: equipeA, b: equipeB, bo: bestOf, date, heure });
+		if (dejaJoue || !equipeA.trim() || !equipeB.trim()) {
+			apercu = null;
+			return;
+		}
+		calcul = true;
+		const ctrl = new AbortController();
+		const t = setTimeout(async () => {
+			try {
+				const r = await fetch(`/admin/cotes?${params}`, { signal: ctrl.signal });
+				const j = await r.json();
+				apercu = j.incomplet ? null : j;
+			} catch {
+				/* saisie en cours ou réseau coupé : on garde l'aperçu précédent */
+			} finally {
+				calcul = false;
+			}
+		}, 350);
+		return () => {
+			clearTimeout(t);
+			ctrl.abort();
+		};
+	});
+	const pct = (p) => `${Math.round(p * 100)} %`;
+	const scoresPossibles = (bo) => {
+		const g = Math.floor((bo ?? 1) / 2) + 1;
+		return { a: Array.from({ length: g }, (_, i) => `${g}-${i}`), b: Array.from({ length: g }, (_, i) => `${i}-${g}`) };
+	};
 
 	// Confirmation en deux temps des actions sans retour (régler, annuler, réinitialiser)
 	let aConfirmer = $state(/** @type {string | null} */ (null));
@@ -66,7 +123,7 @@
 	{#if onglet === 'match'}
 		<section class="carte" aria-labelledby="t-match">
 			<h2 id="t-match">Ajouter un match</h2>
-			<p class="aide">Les paris ouvrent tout de suite et ferment à l’heure du match. Une équipe ou une compétition inconnue est créée automatiquement.</p>
+			<p class="aide">Les cotes sont calculées par l’application à partir des matchs déjà joués. Les paris ouvrent tout de suite et ferment à l’heure du match. Une équipe ou une compétition inconnue est créée automatiquement.</p>
 			<form method="POST" action="?/creer" use:enhance={soumettre}>
 				<label class="champ">Jeu
 					<select name="jeu" bind:value={jeu}>
@@ -75,34 +132,69 @@
 				</label>
 				<div class="deux">
 					<label class="champ">Compétition
-						<input type="text" name="competition" list="liste-competitions" value={v.competition ?? ''} required placeholder="Worlds 2026" />
+						<input type="text" name="competition" list="liste-competitions" bind:value={competition} required placeholder="Worlds 2026" />
 					</label>
 					<label class="champ">Région
-						<input type="text" name="region" value={v.region ?? ''} placeholder="International" />
+						<input type="text" name="region" bind:value={region} placeholder="International" />
 					</label>
 				</div>
 				<datalist id="liste-competitions">{#each competitionsDuJeu as c (c.id)}<option value={c.nom}></option>{/each}</datalist>
 				<label class="champ">Phase <span class="facultatif">facultatif</span>
-					<input type="text" name="phase" value={v.phase ?? ''} placeholder="Quart de finale" />
+					<input type="text" name="phase" bind:value={phase} placeholder="Quart de finale" />
 				</label>
-				<label class="champ">Date<input type="date" name="date" value={v.date ?? demain} required /></label>
+				<label class="case">
+					<input type="checkbox" name="deja_joue" bind:checked={dejaJoue} />
+					<span>Match déjà joué : je l’ajoute à l’historique pour améliorer les cotes (sans paris)</span>
+				</label>
+				<label class="champ">Date<input type="date" name="date" bind:value={date} required /></label>
 				<div class="trois">
-					<label class="champ">Heure<input type="time" name="heure" value={v.heure ?? '20:00'} required /></label>
+					<label class="champ">Heure<input type="time" name="heure" bind:value={heure} required /></label>
 					<label class="champ">Format
-						<select name="best_of">
-							{#each [1, 3, 5, 7] as bo (bo)}<option value={bo} selected={String(bo) === String(v.best_of ?? 3)}>BO{bo}</option>{/each}
+						<select name="best_of" bind:value={bestOf}>
+							{#each [1, 3, 5, 7] as bo (bo)}<option value={String(bo)}>BO{bo}</option>{/each}
 						</select>
 					</label>
 				</div>
 				<datalist id="liste-equipes">{#each data.equipes as e (e.nom)}<option value={e.nom}></option>{/each}</datalist>
-				<div class="duel">
-					<label class="champ">Équipe A<input type="text" name="equipe_a" list="liste-equipes" value={v.equipe_a ?? ''} required /></label>
-					<label class="champ">Cote A<input type="text" name="cote_a" inputmode="decimal" value={v.cote_a ?? '1,90'} required /></label>
-					<label class="champ">Équipe B<input type="text" name="equipe_b" list="liste-equipes" value={v.equipe_b ?? ''} required /></label>
-					<label class="champ">Cote B<input type="text" name="cote_b" inputmode="decimal" value={v.cote_b ?? '1,90'} required /></label>
+				<div class={dejaJoue ? 'duel' : ''}>
+					<label class="champ">Équipe A<input type="text" name="equipe_a" list="liste-equipes" bind:value={equipeA} required /></label>
+					{#if dejaJoue}<label class="champ">Manches<input type="number" name="score_a" min="0" max="4" value={v.score_a ?? ''} required /></label>{/if}
 				</div>
-				<p class="aide">À cotes égales (1,90 et 1,90), les deux équipes ont autant de chances. Plus la cote est basse, plus l’équipe est favorite.</p>
-				<button type="submit" class="principal" disabled={envoi}>{envoi ? 'Ajout…' : 'Ajouter le match'}</button>
+				<div class={dejaJoue ? 'duel' : ''}>
+					<label class="champ">Équipe B<input type="text" name="equipe_b" list="liste-equipes" bind:value={equipeB} required /></label>
+					{#if dejaJoue}<label class="champ">Manches<input type="number" name="score_b" min="0" max="4" value={v.score_b ?? ''} required /></label>{/if}
+				</div>
+
+				{#if !dejaJoue}
+					<div class="apercu" aria-live="polite">
+						{#if apercu}
+							<div class="cotes-apercu">
+								<span class="nom-eq">{equipeA}</span>
+								<span class="c">{formatCote(apercu.coteA)}</span>
+								<span class="vs">VS</span>
+								<span class="c">{formatCote(apercu.coteB)}</span>
+								<span class="nom-eq droite">{equipeB}</span>
+							</div>
+							<p class="aide">
+								Chances de gagner le match : {pct(apercu.pA)} contre {pct(apercu.pB)} ; une manche : {pct(apercu.detail.pMap)}.
+								Notes Elo {formatNombre(Math.round(apercu.detail.noteA))} et {formatNombre(Math.round(apercu.detail.noteB))},
+								sur {apercu.detail.matchsA} et {apercu.detail.matchsB} match{apercu.detail.matchsA + apercu.detail.matchsB > 1 ? 's' : ''} connus.
+								{#if apercu.detail.h2hMaps > 0}Confrontations directes : {apercu.detail.h2hMaps} manche{apercu.detail.h2hMaps > 1 ? 's' : ''}, correctif de {(apercu.detail.correctifH2h * 100).toFixed(1).replace('.', ',')} point{Math.abs(apercu.detail.correctifH2h * 100) >= 2 ? 's' : ''}.{:else if !apercu.detail.effectifsConnus}Confrontations directes non prises en compte : effectifs non renseignés.{/if}
+							</p>
+							{#if apercu.detail.matchsA === 0 || apercu.detail.matchsB === 0}
+								<p class="alerte">
+									{apercu.detail.matchsA === 0 && apercu.detail.matchsB === 0 ? 'Aucune des deux équipes n’a' : `${apercu.detail.matchsA === 0 ? equipeA : equipeB} n’a`} encore de match dans l’historique : note de départ ({formatNombre(apercu.detail.noteInitiale)}). Ajoute quelques résultats passés pour des cotes plus justes.
+								</p>
+							{/if}
+							{#if apercu.scores.length}
+								<p class="aide">Scores exacts : {apercu.scores.map((s) => `${s.libelle} à ${formatCote(s.cote)}`).join(', ')}. Manche {bestOf} jouée : {formatCote(apercu.derniere.oui.cote)}.</p>
+							{/if}
+						{:else}
+							<p class="aide">{calcul ? 'Calcul des cotes…' : 'Les cotes s’afficheront ici dès que les deux équipes seront saisies.'}</p>
+						{/if}
+					</div>
+				{/if}
+				<button type="submit" class="principal" disabled={envoi}>{envoi ? 'Ajout…' : dejaJoue ? 'Ajouter à l’historique' : 'Ajouter le match'}</button>
 			</form>
 		</section>
 	{:else if onglet === 'resultats'}
@@ -122,22 +214,29 @@
 					</div>
 					{#if aConfirmer?.startsWith(`${r.id}:`)}
 						{@const [, quoi] = aConfirmer.split(':')}
-						<form method="POST" action={quoi === 'annuler' ? '?/annuler' : '?/vainqueur'} use:enhance={soumettre} class="confirmation">
+						{@const [sa, sb] = quoi === 'annuler' ? [0, 0] : quoi.split('-').map(Number)}
+						<form method="POST" action={quoi === 'annuler' ? '?/annuler' : '?/resultat'} use:enhance={soumettre} class="confirmation">
 							<input type="hidden" name="serie" value={r.id} />
-							{#if quoi !== 'annuler'}<input type="hidden" name="gagnant" value={r.equipes[Number(quoi)].nom} />{/if}
-							<p>{quoi === 'annuler' ? 'Annuler ce match et rembourser les paris ?' : `Valider la victoire de ${r.equipes[Number(quoi)].nom} ? Les paris seront payés, sans retour possible.`}</p>
+							{#if quoi !== 'annuler'}<input type="hidden" name="score" value={quoi} />{/if}
+							<p>{quoi === 'annuler' ? 'Annuler ce match et rembourser les paris ?' : `Valider la victoire de ${r.equipes[sa > sb ? 0 : 1].nom}, ${sa}-${sb} ? Tous les paris du match seront réglés, sans retour possible.`}</p>
 							<div class="boutons">
 								<button type="button" class="discret" onclick={() => (aConfirmer = null)}>Retour</button>
 								<button type="submit" class={quoi === 'annuler' ? 'danger' : 'principal'} disabled={envoi}>Confirmer</button>
 							</div>
 						</form>
 					{:else}
-						<p class="question">Qui a gagné ?</p>
-						<div class="equipes">
-							{#each r.equipes as e, i (e.nom)}
-								<button class="equipe" onclick={() => (aConfirmer = `${r.id}:${i}`)}><Blason equipe={e} taille={28} /><span>{e.nom}</span></button>
-							{/each}
-						</div>
+						<p class="question">Score final ?</p>
+						{@const sp = scoresPossibles(r.best_of)}
+						{#each r.equipes as e, i (e.nom)}
+							<div class="score-ligne">
+								<span class="equipe-resultat"><Blason equipe={e} taille={24} /><span>{e.nom} gagne</span></span>
+								<div class="scores">
+									{#each i === 0 ? sp.a : sp.b as sc (sc)}
+										<button class="score" onclick={() => (aConfirmer = `${r.id}:${sc}`)}>{sc}</button>
+									{/each}
+								</div>
+							</div>
+						{/each}
 						<button class="lien-danger" onclick={() => (aConfirmer = `${r.id}:annuler`)}>Match annulé ou reporté de plus de 48 h</button>
 					{/if}
 				</article>
@@ -305,7 +404,7 @@
 	}
 	.duel {
 		display: grid;
-		grid-template-columns: 1fr 88px;
+		grid-template-columns: 1fr 96px;
 		gap: 10px;
 	}
 	.principal,
@@ -369,23 +468,92 @@
 		font-size: 14px;
 		color: var(--texte-doux);
 	}
-	.equipes {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 10px;
+	.score-ligne {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 	}
-	.equipe {
+	.equipe-resultat {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		min-height: 56px;
-		padding: 0 12px;
-		border-radius: var(--r-controle);
-		border: 1px solid var(--bordure-forte);
-		background: var(--surface-carte);
-		text-align: left;
+		gap: 8px;
 		font-size: 14px;
 		font-weight: 600;
+	}
+	.scores {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.score {
+		min-width: 64px;
+		min-height: 44px;
+		padding: 0 12px;
+		border-radius: var(--r-bouton);
+		border: 1px solid var(--bordure-forte);
+		background: var(--surface-carte);
+		font-size: 16px;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	.case {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		min-height: 44px;
+		font-size: 14px;
+		line-height: 1.4;
+		color: var(--texte-doux);
+	}
+	.case input {
+		flex: 0 0 auto;
+		width: 22px;
+		min-height: 22px;
+		height: 22px;
+		margin: 0;
+		accent-color: var(--magenta-arene);
+	}
+	.apercu {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px;
+		border-radius: var(--r-controle);
+		background: var(--surface-carte);
+	}
+	.cotes-apercu {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+		align-items: center;
+		gap: 8px;
+	}
+	.nom-eq {
+		font-size: 13px;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+	.nom-eq.droite {
+		text-align: right;
+	}
+	.cotes-apercu .c {
+		padding: 6px 10px;
+		border-radius: var(--r-cote);
+		background: #c6ff4d26;
+		border: 1px solid #c6ff4d59;
+		font-size: 17px;
+		font-weight: 700;
+	}
+	.cotes-apercu .vs {
+		font-size: 13px;
+		font-weight: 700;
+		font-style: italic;
+		color: #8d8a9b;
+	}
+	.alerte {
+		margin: 0;
+		font-size: 13px;
+		line-height: 1.4;
+		color: var(--ambre-fermeture);
 	}
 	.lien-danger {
 		align-self: flex-start;
