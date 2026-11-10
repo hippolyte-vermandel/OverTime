@@ -11,7 +11,7 @@ export async function load({ locals, url }) {
 	let rival = null;
 	if (rang > 0) {
 		const devant = cl.classes[rang - 1];
-		rival = { pseudo: devant.pseudo, ecart: devant.rendement - cl.classes[rang].rendement, dernier: await dernierPari(j.ligue.id, devant.id) };
+		rival = { pseudo: devant.pseudo, ecart: devant.bilan - cl.classes[rang].bilan, dernier: await dernierPari(j.ligue.id, devant.id) };
 	}
 	return { periode, saison, ...cl, rival, moi: j.id };
 }

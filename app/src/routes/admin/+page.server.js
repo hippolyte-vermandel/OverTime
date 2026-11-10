@@ -14,6 +14,7 @@ import {
 	changerRole,
 	ErreurSaisie
 } from '#lib/server/admin.js';
+import { noterRangs } from '#lib/server/paris.js';
 
 // Réservé aux administrateurs de la ligue
 function exigerAdmin(locals) {
@@ -81,6 +82,7 @@ export const actions = {
 		const [scoreA, scoreB] = String(f.get('score') ?? '').split('-').map(Number);
 		try {
 			const { nb, gagnant } = await validerResultat(serie, scoreA, scoreB);
+			await noterRangs(locals.joueur.ligue.id).catch((e) => console.error('Relevé des rangs :', e.message));
 			return { action: 'resultat', succes: `Victoire de ${gagnant} (${scoreA}-${scoreB}) validée. ${nb} pari${nb > 1 ? 's' : ''} réglé${nb > 1 ? 's' : ''}.` };
 		} catch (e) {
 			return echec(e, 'resultat');

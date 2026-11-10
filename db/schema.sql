@@ -258,6 +258,19 @@ CREATE TABLE saison (
     UNIQUE (ligue_id, date_debut)
 );
 
+-- Rang de chaque membre au classement de la saison, noté chaque jour (le dernier relevé
+-- de la journée fait foi). Sert aux flèches « places gagnées ou perdues depuis la veille ».
+CREATE TABLE rang_classement (
+    ligue_id        int  NOT NULL,
+    saison_id       int  NOT NULL REFERENCES saison(id) ON DELETE CASCADE,
+    utilisateur_id  int  NOT NULL,
+    jour            date NOT NULL,
+    rang            int  NOT NULL CHECK (rang > 0),
+    PRIMARY KEY (ligue_id, saison_id, jour, utilisateur_id),
+    FOREIGN KEY (ligue_id, utilisateur_id)
+        REFERENCES membre_ligue (ligue_id, utilisateur_id) ON DELETE CASCADE
+);
+
 -- Un marché = une question sur laquelle on peut parier.
 --   type 'vainqueur'      : qui gagne la série ?
 --   type 'score_exact'    : 3-1, 2-3... ?

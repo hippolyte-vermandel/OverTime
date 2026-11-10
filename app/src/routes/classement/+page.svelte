@@ -2,8 +2,9 @@
 	import { formatNombre } from '#lib/format.js';
 
 	let { data } = $props();
-	const rdt = (r) => (r === null ? '—' : r.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-	const ecart = (e) => e.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	// Bilan signé : +244, −60, 0
+	const signe = (n) => (n > 0 ? `+${formatNombre(n)}` : n < 0 ? `−${formatNombre(-n)}` : '0');
+	const places = (n) => `${n} place${n > 1 ? 's' : ''}`;
 	const semaine = $derived(data.periode === 'semaine');
 </script>
 
@@ -27,7 +28,7 @@
 		</nav>
 
 		<p class="explication">
-			Rendement : noxus récupérés divisés par noxus misés, sur les paris réglés. À 1,00, tu as tout récupéré ; au-dessus, tu gagnes.
+			Bilan : noxus récupérés moins noxus misés, sur les paris réglés. Au-dessus de zéro, tu as gagné plus que tu n’as misé.
 			{semaine ? 'Paris réglés depuis lundi.' : `Il faut ${data.seuil} paris réglés dans la saison pour être classé.`}
 		</p>
 
@@ -37,7 +38,7 @@
 				<div class="texte">
 					<span class="fort">{data.rival.pseudo} est juste devant toi</span>
 					<span class="doux">
-						{ecart(data.rival.ecart)} de rendement d’écart{semaine ? ' cette semaine' : ''}.
+						{formatNombre(data.rival.ecart)} noxus d’écart{semaine ? ' cette semaine' : ''}.
 						{#if data.rival.dernier}Son dernier pari : {data.rival.dernier.libelle} ({data.rival.dernier.competition}).{/if}
 					</span>
 				</div>
@@ -56,7 +57,11 @@
 							<span class="fort">{l.pseudo}{l.id === data.moi ? ', toi' : ''}</span>
 							<span class="meta">{formatNombre(l.recupere)} récupérés pour {formatNombre(l.mise)} misés, {l.regles} pari{l.regles > 1 ? 's' : ''}</span>
 						</div>
-						<span class="rendement" aria-label="Rendement {rdt(l.rendement)}">{rdt(l.rendement)}</span>
+						<div class="droite">
+							<span class="bilan" class:negatif={l.bilan < 0}>{signe(l.bilan)}</span>
+							{#if l.evolution > 0}<span class="evo monte" aria-label="gagne {places(l.evolution)} depuis hier">▲ {l.evolution}</span>
+							{:else if l.evolution < 0}<span class="evo descend" aria-label="perd {places(-l.evolution)} depuis hier">▼ {-l.evolution}</span>{/if}
+						</div>
 					</li>
 				{/each}
 			</ol>
@@ -215,7 +220,25 @@
 		font-size: 13px;
 		color: var(--texte-doux);
 	}
-	.rendement {
+	.droite {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+	.evo {
+		font-size: 12px;
+		font-weight: 600;
+	}
+	.evo.monte {
+		color: var(--vert-cote);
+	}
+	.evo.descend {
+		color: var(--rouge-perte);
+	}
+	.bilan.negatif {
+		color: var(--texte-doux);
+	}
+	.bilan {
 		font-size: 17px;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
