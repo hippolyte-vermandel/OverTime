@@ -234,10 +234,14 @@ CREATE TABLE membre_ligue (
     ligue_id        int NOT NULL REFERENCES ligue(id) ON DELETE CASCADE,
     utilisateur_id  int NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
     role            text NOT NULL DEFAULT 'membre'
-                    CHECK (role IN ('membre', 'admin')),  -- l'admin valide les résultats
+                    CHECK (role IN ('membre', 'admin', 'proprietaire')),
+                    -- admin : matchs, résultats, membres ; proprietaire : en plus, nomme et
+                    -- retire les admins (un seul par ligue, le premier inscrit)
     rejoint_le      timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (ligue_id, utilisateur_id)
 );
+-- Un seul propriétaire par ligue
+CREATE UNIQUE INDEX un_proprietaire_par_ligue ON membre_ligue (ligue_id) WHERE role = 'proprietaire';
 
 -- Les saisons d'une ligue : par défaut, un semestre (janvier-juin,
 -- juillet-décembre). Elles sont propres à la LIGUE, pas aux jeux : chaque

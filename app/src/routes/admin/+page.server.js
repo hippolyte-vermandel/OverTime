@@ -1,4 +1,4 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import {
 	jeuxDuels,
 	referentiel,
@@ -18,7 +18,7 @@ import {
 // Réservé aux administrateurs de la ligue
 function exigerAdmin(locals) {
 	const j = locals.joueur;
-	if (!j?.ligue || j.role !== 'admin') error(403, 'Cette page est réservée à l’administrateur de la ligue.');
+	if (!j?.ligue || !j.estAdmin) error(403, 'Cette page est réservée à l’administrateur de la ligue.');
 	return j;
 }
 
@@ -104,12 +104,10 @@ export const actions = {
 		const id = Number(f.get('utilisateur'));
 		const admin = f.get('admin') === 'oui';
 		try {
-			await changerRole(j.ligue.id, id, admin);
+			await changerRole(j, id, admin);
 		} catch (e) {
 			return echec(e, 'membres');
 		}
-		// Qui se retire lui-même le rôle n'a plus accès à cette page
-		if (id === j.id && !admin) redirect(303, '/profil');
 		return { action: 'membres', succes: admin ? 'Nouvel administrateur nommé.' : 'Rôle d’administrateur retiré.' };
 	},
 
@@ -117,7 +115,7 @@ export const actions = {
 		const j = exigerAdmin(locals);
 		const id = Number((await request.formData()).get('utilisateur'));
 		try {
-			const r = await reinitialiserMotDePasse(j.ligue.id, id);
+			const r = await reinitialiserMotDePasse(j, id);
 			return { action: 'membres', reinitialise: r };
 		} catch (e) {
 			return echec(e, 'membres');

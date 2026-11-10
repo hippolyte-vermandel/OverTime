@@ -83,7 +83,7 @@ INSERT INTO ligue (nom, code_invitation, createur_id) VALUES ('Les potes', 'NOX-
 -- On passe TOUJOURS par les fonctions pour tout ce qui touche aux noxus
 SELECT rejoindre_ligue(1, 'NOX-4821'), rejoindre_ligue(2, 'NOX-4821'),
        rejoindre_ligue(3, 'NOX-4821');
-UPDATE membre_ligue SET role = 'admin' WHERE utilisateur_id = 1;
+UPDATE membre_ligue SET role = 'proprietaire' WHERE utilisateur_id = 1;
 
 -- Marchés ouverts avant le match
 INSERT INTO marche (serie_id, type, libelle, ferme_le) VALUES

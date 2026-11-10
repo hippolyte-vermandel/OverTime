@@ -5,7 +5,7 @@ import { instant } from '#lib/server/admin.js';
 // Aperçu des cotes calculées pendant la saisie d'un match (administrateur seulement).
 // Les cotes enregistrées sont recalculées côté serveur au moment de l'ajout.
 export async function GET({ url, locals }) {
-	if (locals.joueur?.role !== 'admin') error(403, 'Réservé à l’administrateur.');
+	if (!locals.joueur?.estAdmin) error(403, 'Réservé à l’administrateur.');
 	const q = url.searchParams;
 	const bestOf = Number(q.get('bo'));
 	const equipeA = (q.get('a') ?? '').trim();

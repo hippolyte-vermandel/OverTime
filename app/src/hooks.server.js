@@ -2,6 +2,12 @@ import { building } from '$app/environment';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '#lib/server/auth.js';
 import { chargerJoueur } from '#lib/server/joueur.js';
+import { demarrerTaches } from '#lib/server/taches.js';
+
+// Au démarrage du serveur : recharges hebdomadaires, puis toutes les heures
+export function init() {
+	if (!building) demarrerTaches();
+}
 
 // Pages accessibles sans être connecté
 const PUBLIQUES = ['/connexion', '/inscription'];

@@ -140,7 +140,8 @@ npm run dev
 Ouvre **http://localhost:5173** : tu arrives sur la page de connexion. Choisis
 « Créer un compte », entre le code d'invitation de la ligue (`OVT-7KQ2` dans l'exemple),
 un pseudo et un mot de passe. **La première personne qui rejoint une ligue en devient
-l'administrateur.** Les matchs de démonstration s'affichent ensuite, et tu peux parier.
+le propriétaire** : elle seule peut nommer ou retirer des administrateurs (Profil >
+Administration > Membres). Les administrateurs ajoutent les matchs et valident les résultats. Les matchs de démonstration s'affichent ensuite, et tu peux parier.
 Les modifications du code s'affichent en direct. `Ctrl + C` arrête le serveur.
 
 ### 5. Essayer sur ton téléphone (même Wi-Fi)
@@ -167,7 +168,9 @@ node --env-file=.env build
 ```
 
 Mets la même adresse dans `BETTER_AUTH_URL` du fichier `.env`. L'application tourne alors
-sur le port 3000, sans le mode développement. Derrière le tunnel HTTPS, l'adresse sera celle
+sur le port 3000, sans le mode développement. Tant qu'elle tourne, elle verse toute seule les
+recharges hebdomadaires de noxus et le solde de départ des nouvelles saisons (vérification
+au démarrage, puis toutes les heures). Derrière le tunnel HTTPS, l'adresse sera celle
 du tunnel.
 
 ---
