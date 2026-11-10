@@ -5,11 +5,17 @@
 	let { equipe, taille = 20 } = $props();
 
 	const sigle = $derived(equipe.sigle ?? equipe.nom.slice(0, 3).toUpperCase());
+	// Image introuvable ou refusée par l'hébergeur : on revient au sigle
+	let casse = $state(false);
+	$effect(() => {
+		equipe.logo_url;
+		casse = false;
+	});
 </script>
 
 <span class="blason" style="--t: {taille}px" aria-hidden="true">
-	{#if equipe.logo_url}
-		<img src={equipe.logo_url} alt="" width={taille} height={taille} />
+	{#if equipe.logo_url && !casse}
+		<img src={equipe.logo_url} alt="" width={taille} height={taille} loading="lazy" referrerpolicy="no-referrer" onerror={() => (casse = true)} />
 	{:else}
 		<span class="sigle" style="font-size: {Math.max(7, Math.round(taille * (sigle.length > 3 ? 0.28 : 0.36)))}px">{sigle}</span>
 	{/if}

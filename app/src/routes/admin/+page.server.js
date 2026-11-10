@@ -15,6 +15,7 @@ import {
 	ErreurSaisie
 } from '#lib/server/admin.js';
 import { noterRangs } from '#lib/server/paris.js';
+import { SOURCES, derniers, importerMaintenant } from '#lib/server/import/index.js';
 
 // Réservé aux administrateurs de la ligue
 function exigerAdmin(locals) {
@@ -32,7 +33,8 @@ export async function load({ locals }) {
 		membres(j.ligue.id),
 		codeInvitation(j.ligue.id)
 	]);
-	return { jeux, ...ref, resultats, membres: liste, code };
+	const sources = SOURCES.map((s) => ({ cle: s.cle, jeu: s.jeu, nom: s.nom, lien: s.lien, variable: s.variable ?? null, active: s.active(), dernier: derniers[s.cle] ?? null }));
+	return { jeux, ...ref, resultats, membres: liste, code, sources };
 }
 
 // Transforme une erreur en message pour l'administrateur
@@ -43,6 +45,18 @@ function echec(e, action, champs = {}) {
 }
 
 export const actions = {
+	// Import automatique des matchs (Leaguepedia, Liquipedia) : aperçu sans rien écrire, ou import réel
+	importer: async ({ request, locals }) => {
+		const j = exigerAdmin(locals);
+		const f = await request.formData();
+		const source = String(f.get('source') ?? '');
+		if (!SOURCES.some((s) => s.cle === source)) return fail(400, { action: 'importer', erreur: 'Source inconnue.' });
+		const apercu = f.get('apercu') === 'oui';
+		const r = await importerMaintenant(source, apercu);
+		if (!apercu && !r.erreur) await noterRangs(j.ligue.id).catch((e) => console.error('Relevé des rangs :', e.message));
+		return r.erreur ? fail(502, { action: 'importer', erreur: r.texte }) : { action: 'importer', succes: r.texte, exemples: r.exemples ?? null };
+	},
+
 	creer: async ({ request, locals }) => {
 		exigerAdmin(locals);
 		const f = Object.fromEntries(await request.formData());

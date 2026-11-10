@@ -12,7 +12,7 @@ export async function prochainsMatchs(limite = 200) {
 		       c.nom AS competition, c.categorie,
 		       j.code AS jeu, j.nom AS jeu_nom,
 		       (SELECT json_agg(json_build_object(
-		                 'nom', e.nom, 'sigle', e.sigle, 'cote_terrain', p.cote_terrain)
+		                 'nom', e.nom, 'sigle', e.sigle, 'logo_url', e.logo_url, 'cote_terrain', p.cote_terrain)
 		                 ORDER BY p.cote_terrain)
 		          FROM participation p JOIN equipe e ON e.id = p.equipe_id
 		         WHERE p.serie_id = s.id) AS equipes,
@@ -52,4 +52,15 @@ export async function prochainsMatchs(limite = 200) {
 			marche_ouvert: m.marche_vainqueur?.statut === 'ouvert'
 		};
 	});
+}
+
+/** Sources automatiques dont des matchs sont dans la base, pour les citer (licence CC BY-SA) */
+const LIENS = { leaguepedia: 'https://lol.fandom.com', liquipedia: 'https://liquipedia.net', pandascore: 'https://pandascore.co' };
+export async function sourcesCitees() {
+	const lignes = await requete(
+		`SELECT so.code, so.nom, so.licence FROM source so
+		  WHERE EXISTS (SELECT 1 FROM identifiant_externe ie WHERE ie.source_id = so.id)
+		  ORDER BY so.nom`
+	);
+	return lignes.map((l) => ({ ...l, lien: LIENS[l.code] ?? null }));
 }
