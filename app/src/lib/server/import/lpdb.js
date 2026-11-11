@@ -39,6 +39,12 @@ const entier = (v) => {
 	return Number.isNaN(n) ? null : n;
 };
 
+const logo = (adversaire) => {
+	const t = adversaire?.teamtemplate;
+	const url = t?.imagedarkurl || t?.imageurl || null;
+	return typeof url === 'string' && url.startsWith('https://') ? url : null;
+};
+
 /** @returns {import('./commun.js').MatchNormalise | null} */
 export function versMatch(r) {
 	const [a, b] = Array.isArray(r?.match2opponents) ? r.match2opponents : [];
@@ -65,7 +71,13 @@ export function versMatch(r) {
 		scoreA,
 		scoreB,
 		// « np » : match qui ne sera pas joué
-		annule: fini && r.resulttype === 'np'
+		annule: fini && r.resulttype === 'np',
+		// Sigle et logo de l'équipe (modèle d'équipe Liquipedia). Le logo « sombre »,
+		// prévu pour les fonds foncés, convient mieux au thème d'OverTime.
+		sigleA: a.teamtemplate?.shortname ?? null,
+		sigleB: b.teamtemplate?.shortname ?? null,
+		logoA: logo(a),
+		logoB: logo(b)
 	};
 }
 

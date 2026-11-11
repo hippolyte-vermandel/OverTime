@@ -38,8 +38,13 @@ test('Leaguepedia : requête filtrée par niveau et région', () => {
 
 test('Liquipedia : match terminé, à venir, non joué', () => {
 	const base = { match2id: 'abc_R01-M001', date: '2026-11-21 18:00:00', bestof: 3, tickername: 'VCT EMEA', section: 'Playoffs' };
-	const avenir = lpdb.versMatch({ ...base, finished: 0, winner: '', match2opponents: [{ type: 'team', name: 'Karmine Corp', score: -1 }, { type: 'team', name: 'Team Heretics', score: -1 }] });
+	const avenir = lpdb.versMatch({ ...base, finished: 0, winner: '', match2opponents: [
+		{ type: 'team', name: 'Karmine Corp', score: -1, teamtemplate: { shortname: 'KC', imageurl: 'https://liquipedia.net/commons/images/kc_light.png', imagedarkurl: 'https://liquipedia.net/commons/images/kc_dark.png' } },
+		{ type: 'team', name: 'Team Heretics', score: -1, teamtemplate: { shortname: 'TH', imageurl: 'https://liquipedia.net/commons/images/th.png', imagedarkurl: '' } }
+	] });
 	assert.equal(avenir.termine, false);
+	assert.deepEqual([avenir.sigleA, avenir.logoA], ['KC', 'https://liquipedia.net/commons/images/kc_dark.png'], 'logo sombre de préférence');
+	assert.deepEqual([avenir.sigleB, avenir.logoB], ['TH', 'https://liquipedia.net/commons/images/th.png'], 'sinon le logo clair');
 	assert.equal(avenir.competition, 'VCT EMEA');
 	assert.equal(avenir.jeu, 'valorant');
 	const fini = lpdb.versMatch({ ...base, finished: 1, winner: '2', match2opponents: [{ type: 'team', name: 'A', score: 1 }, { type: 'team', name: 'B', score: 2 }] });
