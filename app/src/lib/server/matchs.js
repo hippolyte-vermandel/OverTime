@@ -64,3 +64,39 @@ export async function sourcesCitees() {
 	);
 	return lignes.map((l) => ({ ...l, lien: LIENS[l.code] ?? null }));
 }
+
+/**
+ * Les prochaines épreuves en lobby (Fortnite, Warzone, TFT) : chaque participant avec ses
+ * paris « top X » (la cote du « oui »). Même forme générale que les matchs, avec lobby: true.
+ */
+export async function prochainesEpreuves(limite = 50) {
+	const lignes = await requete(
+		`SELECT s.id, s.date_prevue, s.phase, c.nom AS competition, c.categorie, j.code AS jeu, j.nom AS jeu_nom,
+		        (SELECT json_agg(json_build_object(
+		                  'id', pa.id, 'libelle', pa.libelle,
+		                  'top', (SELECT json_agg(json_build_object(
+		                                   'x', m.ligne::int, 'ouvert', m.statut = 'ouvert',
+		                                   'issue', (SELECT json_build_object('id', i.id, 'libelle', i.libelle, 'cote', i.cote)
+		                                               FROM issue i WHERE i.marche_id = m.id AND i.libelle = 'oui'),
+		                                   'issues', (SELECT json_agg(i.id) FROM issue i WHERE i.marche_id = m.id))
+		                                   ORDER BY m.ligne DESC)
+		                            FROM marche m WHERE m.participation_id = pa.id AND m.type = 'top'))
+		                  ORDER BY pa.id)
+		           FROM participation pa WHERE pa.serie_id = s.id) AS participants
+		   FROM serie s
+		   JOIN competition c ON c.id = s.competition_id
+		   JOIN jeu j ON j.id = c.jeu_id AND j.format = 'lobby'
+		  WHERE s.statut = 'programmee' AND s.date_prevue > now()
+		  ORDER BY s.date_prevue
+		  LIMIT $1`,
+		[limite]
+	);
+	return lignes.map((e) => {
+		const participants = (e.participants ?? []).map((p) => ({ ...p, top: p.top ?? [] }));
+		// Du plus au moins favori : la cote de victoire (le plus petit seuil) la plus basse d'abord
+		const coteVictoire = (p) => p.top.at(-1)?.issue?.cote ?? Infinity;
+		participants.sort((a, b) => coteVictoire(a) - coteVictoire(b));
+		const seuils = participants[0]?.top.map((t) => t.x) ?? [];
+		return { ...e, date_prevue: e.date_prevue.toISOString(), lobby: true, equipes: [], seuils, participants, nb_marches: 0 };
+	});
+}

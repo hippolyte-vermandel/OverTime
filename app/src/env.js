@@ -25,6 +25,10 @@ export const variables = defineEnvVars({
 		description: "Clé de l'API PandaScore (Rocket League, Call of Duty). Vide : import désactivé. Ne jamais la publier.",
 		schema: (valeur) => valeur ?? ''
 	},
+	FORTNITE_TRACKER_KEY: {
+		description: "Clé de l'API Fortnite Tracker (Power Rankings, notes de départ des cotes Fortnite). Vide : notes neutres. Ne jamais la publier.",
+		schema: (valeur) => valeur ?? ''
+	},
 	LPDB_TIERS: {
 		description: 'Niveaux Liquipedia importés, séparés par des virgules (1 = plus haut niveau)',
 		schema: (valeur) => valeur || '1'

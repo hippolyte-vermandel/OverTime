@@ -2,6 +2,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import CarteVedette from '#lib/matchs/CarteVedette.svelte';
 	import CarteCompacte from '#lib/matchs/CarteCompacte.svelte';
+	import CarteEpreuve from '#lib/matchs/CarteEpreuve.svelte';
 	import PictoJeu from '#lib/matchs/PictoJeu.svelte';
 	import Calendrier from '#lib/matchs/Calendrier.svelte';
 	import Coupon from '#lib/matchs/Coupon.svelte';
@@ -23,7 +24,7 @@
 	let jeuxChoisis = $state(/** @type {string[]} */ ([]));
 	let filtreOuvert = $state(false);
 
-	// Une seule sélection par match : matchId -> { match, issue }
+	// Une seule sélection par match ou par épreuve : id -> { match, issue, participant?, x? }
 	const selection = new SvelteMap();
 
 	const jeux = $derived.by(() => {
@@ -57,13 +58,15 @@
 	}
 	const journees = $derived(vue === 'liste' ? [...parJour.keys()].sort().map(journee) : [journee(jour)]);
 
-	function choisir(match, issue) {
-		if (data.paries?.[match.id]) return; // déjà parié : un seul pari par match
+	function choisir(match, issue, participant = null, x = null) {
+		if (!match.lobby && data.paries?.[match.id]) return; // déjà parié : un seul pari par match
 		if (selection.get(match.id)?.issue.id === issue.id) selection.delete(match.id);
-		else selection.set(match.id, { match, issue });
+		else selection.set(match.id, { match, issue, participant, x });
 	}
 	const lignes = $derived(
-		[...selection.values()].map(({ match, issue }) => {
+		[...selection.values()].map(({ match, issue, participant, x }) => {
+			if (match.lobby)
+				return { match, issue, choix: `${participant.libelle} ${x === 1 ? 'vainqueur' : `top ${x}`}`, contexte: `${match.competition}${match.phase ? `, ${match.phase}` : ''}` };
 			const autre = match.equipes.find((e) => e.issue?.id !== issue.id);
 			return { match, issue, choix: issue.libelle, contexte: `contre ${autre?.nom ?? ''}, ${match.competition}` };
 		})
@@ -135,7 +138,11 @@
 							<h3>{g.competition}{#if g.phase}<span>, {g.phase}</span>{/if}</h3>
 						</div>
 						{#each g.matchs as m (m.id)}
-							<CarteCompacte match={m} choix={selection.get(m.id)?.issue.id ?? null} pariees={data.paries?.[m.id] ?? null} {maintenant} onchoisir={choisir} />
+							{#if m.lobby}
+								<CarteEpreuve epreuve={m} choix={selection.get(m.id)?.issue.id ?? null} pariees={data.paries?.[m.id] ?? null} {maintenant} onchoisir={choisir} />
+							{:else}
+								<CarteCompacte match={m} choix={selection.get(m.id)?.issue.id ?? null} pariees={data.paries?.[m.id] ?? null} {maintenant} onchoisir={choisir} />
+							{/if}
 						{/each}
 					</section>
 				{/each}

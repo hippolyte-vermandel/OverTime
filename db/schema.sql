@@ -127,19 +127,33 @@ CREATE TABLE serie (
 CREATE INDEX serie_date_idx ON serie (date_prevue);
 
 -- Qui participe à une série. Deux lignes pour un match d'équipes, une
--- trentaine pour un lobby Fortnite. Un participant est soit une équipe,
--- soit un joueur seul (duel, solo) : exactement l'un des deux.
+-- cinquantaine pour un lobby Fortnite. Un participant est soit une équipe,
+-- soit un joueur seul (duel), soit, en lobby, un groupe de joueurs (solo,
+-- duo, trio, quatuor) : un libellé (« Peterbot / Pollo ») et ses joueurs
+-- dans participation_joueur.
 CREATE TABLE participation (
     id          serial PRIMARY KEY,
     serie_id    int  NOT NULL REFERENCES serie(id) ON DELETE CASCADE,
     equipe_id   int  REFERENCES equipe(id),
     joueur_id   int  REFERENCES joueur(id),
+    libelle     text,                        -- groupe de joueurs en lobby
     cote_terrain char(1) CHECK (cote_terrain IN ('A', 'B')),  -- pour les duels d'équipes
     score       int,                         -- maps gagnées (ou points cumulés en lobby)
     classement  int,                         -- 1 = vainqueur ; position finale en lobby
-    CHECK ((equipe_id IS NULL) <> (joueur_id IS NULL)),
+    CONSTRAINT participation_check CHECK (
+        ((equipe_id IS NULL) <> (joueur_id IS NULL))
+        OR (equipe_id IS NULL AND joueur_id IS NULL AND libelle IS NOT NULL)),
     UNIQUE (serie_id, equipe_id),
     UNIQUE (serie_id, joueur_id)
+);
+CREATE UNIQUE INDEX participation_libelle_idx ON participation (serie_id, lower(libelle));
+
+-- Les joueurs d'un groupe en lobby. La note qui sert aux cotes est celle des
+-- joueurs : un joueur qui change de duo garde son niveau.
+CREATE TABLE participation_joueur (
+    participation_id int NOT NULL REFERENCES participation(id) ON DELETE CASCADE,
+    joueur_id        int NOT NULL REFERENCES joueur(id),
+    PRIMARY KEY (participation_id, joueur_id)
 );
 
 -- Une partie = une map (Valorant, LoL) ou une game de lobby (Fortnite).
@@ -288,6 +302,7 @@ CREATE TABLE marche (
     statistique    text,
     joueur_id      int  REFERENCES joueur(id),
     equipe_id      int  REFERENCES equipe(id),
+    participation_id int REFERENCES participation(id),  -- lobby : le groupe visé par un « top X »
     ligne          numeric(8,1),
     libelle        text NOT NULL,            -- texte affiché : "Caps : plus ou moins de 4,5 kills"
     statut         text NOT NULL DEFAULT 'ouvert'

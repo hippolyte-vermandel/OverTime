@@ -10,6 +10,7 @@
 --
 --   saison_courante(...)    : la saison en cours (créée automatiquement)
 --   placer_pari(...)        : vérifie tout, crée le pari, débite les noxus
+--   regler_epreuve(...)     : règle les paris « top X » d'une épreuve en lobby
 --   regler_marche(...)      : enregistre la bonne réponse, paie les gagnants
 --   annuler_marche(...)     : match annulé, map non jouée... rembourse
 --   crediter_recharges()    : solde de départ en début de saison,
@@ -23,7 +24,7 @@ BEGIN;
 --  Si elle n'existe pas encore, on crée le semestre correspondant :
 --  1er janvier - 30 juin ("S1") ou 1er juillet - 31 décembre ("S2").
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION saison_courante(p_ligue int, p_jour date DEFAULT current_date)
+CREATE OR REPLACE FUNCTION saison_courante(p_ligue int, p_jour date DEFAULT current_date)
 RETURNS int AS $$
 DECLARE
     v_id    int;
@@ -52,13 +53,13 @@ $$ LANGUAGE plpgsql;
 -- ---------------------------------------------------------------------------
 --  SOLDE d'un membre dans une saison (par défaut : la saison en cours)
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION solde_saison(p_saison int, p_utilisateur int) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION solde_saison(p_saison int, p_utilisateur int) RETURNS int AS $$
     SELECT COALESCE(SUM(montant), 0)::int
       FROM mouvement_noxus
      WHERE saison_id = p_saison AND utilisateur_id = p_utilisateur;
 $$ LANGUAGE sql STABLE;
 
-CREATE FUNCTION solde(p_ligue int, p_utilisateur int) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION solde(p_ligue int, p_utilisateur int) RETURNS int AS $$
     SELECT solde_saison(saison_courante(p_ligue), p_utilisateur);
 $$ LANGUAGE sql;
 
@@ -67,7 +68,7 @@ $$ LANGUAGE sql;
 --  SOLDE DE DÉPART : versé une fois par saison et par membre.
 --  Renvoie true si le versement vient d'être fait.
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION assurer_depart(p_ligue int, p_utilisateur int, p_saison int,
+CREATE OR REPLACE FUNCTION assurer_depart(p_ligue int, p_utilisateur int, p_saison int,
                                p_quand timestamptz DEFAULT now())
 RETURNS boolean AS $$
 BEGIN
@@ -89,7 +90,7 @@ $$ LANGUAGE plpgsql;
 --  p_issues : la liste des issues choisies. Une seule = pari simple,
 --  plusieurs = combiné. Renvoie le numéro du pari créé.
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION placer_pari(p_utilisateur int, p_ligue int, p_mise int,
+CREATE OR REPLACE FUNCTION placer_pari(p_utilisateur int, p_ligue int, p_mise int,
                             p_issues int[]) RETURNS int AS $$
 DECLARE
     regles      ligue%ROWTYPE;
@@ -152,20 +153,34 @@ BEGIN
       FROM issue i JOIN marche m ON m.id = i.marche_id
      WHERE i.id = ANY (p_issues);
     IF nb_matchs <> nb THEN
-        RAISE EXCEPTION 'Un combiné ne peut contenir qu''une sélection par match';
+        RAISE EXCEPTION 'Un combiné ne peut contenir qu''une sélection par match ou par épreuve';
     END IF;
     -- Un seul pari par match et par joueur, marchés secondaires compris :
-    -- sinon on contournerait la mise maximale en multipliant les coupons
+    -- sinon on contournerait la mise maximale en multipliant les coupons.
+    -- En lobby (marchés « top X » d'un participant), la règle vaut par
+    -- participant : on peut parier sur plusieurs duos d'une même épreuve.
     IF EXISTS (SELECT 1
                  FROM pari p
                  JOIN pari_selection ps ON ps.pari_id = p.id
                  JOIN issue  i ON i.id = ps.issue_id
                  JOIN marche m ON m.id = i.marche_id
                 WHERE p.ligue_id = p_ligue AND p.utilisateur_id = p_utilisateur
+                  AND m.participation_id IS NULL
                   AND m.serie_id IN (SELECT m2.serie_id
                                        FROM issue i2 JOIN marche m2 ON m2.id = i2.marche_id
-                                      WHERE i2.id = ANY (p_issues))) THEN
+                                      WHERE i2.id = ANY (p_issues) AND m2.participation_id IS NULL)) THEN
         RAISE EXCEPTION 'Tu as déjà un pari sur ce match';
+    END IF;
+    IF EXISTS (SELECT 1
+                 FROM pari p
+                 JOIN pari_selection ps ON ps.pari_id = p.id
+                 JOIN issue  i ON i.id = ps.issue_id
+                 JOIN marche m ON m.id = i.marche_id
+                WHERE p.ligue_id = p_ligue AND p.utilisateur_id = p_utilisateur
+                  AND m.participation_id IN (SELECT m2.participation_id
+                                               FROM issue i2 JOIN marche m2 ON m2.id = i2.marche_id
+                                              WHERE i2.id = ANY (p_issues))) THEN
+        RAISE EXCEPTION 'Tu as déjà un pari sur ce participant';
     END IF;
 
     -- Un pari ne peut pas déborder sur la saison suivante
@@ -210,7 +225,7 @@ $$ LANGUAGE plpgsql;
 --      en entier (on ne "gagne" jamais en perdant des noxus)
 --  Tant qu'une sélection attend son résultat, le pari reste en attente.
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION evaluer_pari(p_pari int) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION evaluer_pari(p_pari int) RETURNS void AS $$
 DECLARE
     p           pari%ROWTYPE;
     perdues     int;
@@ -290,7 +305,7 @@ $$ LANGUAGE plpgsql;
 -- ---------------------------------------------------------------------------
 --  RÉGLER UN MARCHÉ : l'admin indique la bonne réponse (son libellé)
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION regler_marche(p_marche int, p_libelle_gagnant text) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION regler_marche(p_marche int, p_libelle_gagnant text) RETURNS int AS $$
 DECLARE
     m       marche%ROWTYPE;
     p_id    int;
@@ -323,9 +338,44 @@ $$ LANGUAGE plpgsql;
 
 
 -- ---------------------------------------------------------------------------
+--  RÉGLER UNE ÉPREUVE EN LOBBY, une fois le classement final enregistré
+--  (participation.classement). Chaque marché « top X » est gagné par « oui »
+--  si le groupe finit à la place X ou mieux. Un groupe sans classement
+--  (absent, disqualifié) voit ses marchés annulés : mises remboursées.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION regler_epreuve(p_serie int) RETURNS int AS $$
+DECLARE
+    m      record;
+    nb     int := 0;
+BEGIN
+    PERFORM 1 FROM serie WHERE id = p_serie FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Épreuve introuvable';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM participation WHERE serie_id = p_serie AND classement IS NOT NULL) THEN
+        RAISE EXCEPTION 'Aucun classement enregistré pour cette épreuve';
+    END IF;
+    FOR m IN SELECT mk.id, mk.ligne, pa.classement
+               FROM marche mk JOIN participation pa ON pa.id = mk.participation_id
+              WHERE mk.serie_id = p_serie AND mk.type = 'top'
+                AND mk.statut NOT IN ('regle', 'annule')
+    LOOP
+        IF m.classement IS NULL THEN
+            nb := nb + annuler_marche(m.id);
+        ELSE
+            nb := nb + regler_marche(m.id, CASE WHEN m.classement <= m.ligne THEN 'oui' ELSE 'non' END);
+        END IF;
+    END LOOP;
+    UPDATE serie SET statut = 'terminee', resultat_valide = true WHERE id = p_serie;
+    RETURN nb;                               -- nombre de paris examinés
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ---------------------------------------------------------------------------
 --  ANNULER UN MARCHÉ (match annulé, map 5 jamais jouée sur un pari "map 5"...)
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION annuler_marche(p_marche int) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION annuler_marche(p_marche int) RETURNS int AS $$
 DECLARE
     p_id  int;
     nb    int := 0;
@@ -354,7 +404,7 @@ $$ LANGUAGE plpgsql;
 --  La relancer plusieurs fois le même jour ne crédite rien de plus.
 --  Renvoie le nombre de versements effectués.
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION crediter_recharges(p_jour date DEFAULT current_date) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION crediter_recharges(p_jour date DEFAULT current_date) RETURNS int AS $$
 DECLARE
     mb       record;
     v_saison int;
@@ -390,7 +440,7 @@ $$ LANGUAGE plpgsql;
 -- ---------------------------------------------------------------------------
 --  REJOINDRE UNE LIGUE : adhésion + solde de départ en une seule opération
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION rejoindre_ligue(p_utilisateur int, p_code text) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION rejoindre_ligue(p_utilisateur int, p_code text) RETURNS int AS $$
 DECLARE
     l ligue%ROWTYPE;
 BEGIN
@@ -415,7 +465,7 @@ COMMIT;
 -- Exemple : SELECT creer_ligue('Les Potes du Lundi', 'OVT-7KQ2');
 -- Le premier ami qui s'inscrit avec ce code en devient le propriétaire.
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION creer_ligue(p_nom text, p_code text) RETURNS int AS $$
+CREATE OR REPLACE FUNCTION creer_ligue(p_nom text, p_code text) RETURNS int AS $$
 DECLARE
     v_ligue int;
 BEGIN

@@ -4,6 +4,7 @@ import { FUSEAU_HORAIRE } from '$app/env/public';
 import { requete, transaction } from './db.js';
 import { auth } from './auth.js';
 import { calculerCotes } from './cotes/index.js';
+import { ErreurSaisie } from './erreurs.js';
 
 /** Jeux en face-à-face (deux équipes ou deux joueurs) : les seuls saisissables pour l'instant */
 export async function jeuxDuels() {
@@ -236,7 +237,7 @@ export async function changerRole(demandeur, utilisateurId, admin) {
 }
 
 /** Erreur de saisie à montrer telle quelle à l'administrateur */
-export class ErreurSaisie extends Error {}
+export { ErreurSaisie };
 
 // Sigle par défaut : initiales des mots, ou trois premières lettres (« Corbeaux de Lille » → CDL)
 function sigleDe(nom) {

@@ -9,7 +9,7 @@
 	let onglet = $state(/** @type {'match' | 'resultats' | 'membres'} */ ('match'));
 	const onglets = $derived([
 		{ cle: 'match', nom: 'Ajouter' },
-		{ cle: 'resultats', nom: `Résultats${data.resultats.length ? ` (${data.resultats.length})` : ''}` },
+		{ cle: 'resultats', nom: `Résultats${data.resultats.length + data.epreuves.length ? ` (${data.resultats.length + data.epreuves.length})` : ''}` },
 		{ cle: 'membres', nom: 'Membres' }
 	]);
 
@@ -82,6 +82,10 @@
 	// Confirmation en deux temps des actions sans retour (régler, annuler, réinitialiser)
 	let aConfirmer = $state(/** @type {string | null} */ (null));
 	let envoi = $state(false);
+
+	// Saisie d'une épreuve en lobby
+	const ve = $derived(form?.action === 'epreuve' && form?.valeurs ? form.valeurs : {});
+	const libelleTop = (x) => (x === 1 ? 'Vainqueur' : `Top ${x}`);
 	const soumettre = () => {
 		envoi = true;
 		return async ({ update }) => {
@@ -118,7 +122,7 @@
 		{/each}
 	</div>
 
-	{#if form?.erreur}<p class="erreur" role="alert">{form.erreur}</p>{/if}
+	{#if form?.erreur && form?.action !== 'classer'}<p class="erreur" role="alert">{form.erreur}</p>{/if}
 	{#if form?.succes}<p class="succes" role="status">{form.succes}</p>{/if}
 
 	{#if onglet === 'match'}
@@ -199,6 +203,50 @@
 			</form>
 		</section>
 
+		{#if data.jeuxLobby.length}
+			<section class="carte" aria-labelledby="t-epreuve">
+				<h2 id="t-epreuve">Ajouter une épreuve en lobby</h2>
+				<p class="aide">Fortnite, Warzone, TFT : pour chaque participant, un pari « top X » (oui ou non). Une ligne par groupe, joueurs séparés par « / » : <code>Peterbot / Pollo</code>. Pour TFT, un joueur par ligne.</p>
+				<form method="POST" action="?/epreuve" use:enhance={soumettre}>
+					<label class="champ">Jeu
+						<select name="jeu" value={ve.jeu ?? data.jeuxLobby[0].code}>
+							{#each data.jeuxLobby as j (j.code)}<option value={j.code}>{j.nom}</option>{/each}
+						</select>
+					</label>
+					<div class="deux">
+						<label class="champ">Compétition<input type="text" name="competition" placeholder="FNCS Grand Finals" value={ve.competition ?? ''} required /></label>
+						<label class="champ">Région<input type="text" name="region" placeholder="Europe" value={ve.region ?? ''} /></label>
+					</div>
+					<label class="champ">Phase <span class="facultatif">facultatif</span><input type="text" name="phase" placeholder="Jour 1" value={ve.phase ?? ''} /></label>
+					<div class="trois">
+						<label class="champ">Date<input type="date" name="date" value={ve.date ?? demain} required /></label>
+						<label class="champ">Heure<input type="time" name="heure" value={ve.heure ?? '19:00'} required /></label>
+					</div>
+					<label class="champ">Participants
+						<textarea name="participants" rows="8" placeholder={'Peterbot / Pollo\nQueasy / Merstach\nVeno / Th0masHD / Mero'} required>{ve.participants ?? ''}</textarea>
+					</label>
+					{#if form?.action === 'epreuve' && form?.apercu}
+						<div class="apercu-lobby">
+							<p class="meta">Cotes calculées pour {form.apercu.groupes.length} participants ({form.apercu.depart}), du plus au moins favori :</p>
+							<table>
+								<thead><tr><th scope="col">Participant</th>{#each form.apercu.seuils as x (x)}<th scope="col">{libelleTop(x)}</th>{/each}</tr></thead>
+								<tbody>
+									{#each form.apercu.groupes.slice(0, 12) as g (g.libelle)}
+										<tr><th scope="row">{g.libelle}</th>{#each form.apercu.seuils as x (x)}<td>{formatCote(g.top[x].cote)}</td>{/each}</tr>
+									{/each}
+								</tbody>
+							</table>
+							{#if form.apercu.groupes.length > 12}<p class="meta">… et {form.apercu.groupes.length - 12} autres.</p>{/if}
+						</div>
+					{/if}
+					<div class="boutons-source">
+						<button type="submit" name="apercu" value="oui" class="discret" disabled={envoi}>Aperçu des cotes</button>
+						<button type="submit" name="apercu" value="non" class="principal" disabled={envoi}>{envoi ? 'Ajout…' : 'Ajouter l’épreuve'}</button>
+					</div>
+				</form>
+			</section>
+		{/if}
+
 		<section class="carte" aria-labelledby="t-import">
 			<h2 id="t-import">Matchs importés automatiquement</h2>
 			<p class="aide">Toutes les heures (tous les quarts d’heure pour PandaScore), le serveur ajoute les prochains matchs, met à jour les horaires et valide les résultats. « Aperçu » montre ce qui serait importé sans rien enregistrer.</p>
@@ -229,9 +277,41 @@
 	{:else if onglet === 'resultats'}
 		<section aria-labelledby="t-resultats" class="liste">
 			<h2 id="t-resultats" class="visuellement-cache">Résultats à valider</h2>
-			{#if data.resultats.length === 0}
-				<p class="vide">Aucun résultat à valider. Les matchs apparaissent ici dès leur coup d’envoi.</p>
+			{#if data.resultats.length === 0 && data.epreuves.length === 0}
+				<p class="vide">Aucun résultat à valider. Les matchs et les épreuves apparaissent ici dès leur coup d’envoi.</p>
 			{/if}
+			{#each data.epreuves as ep (ep.id)}
+				<article class="carte resultat">
+					<div class="ligne-tete">
+						<PictoJeu jeu={ep.jeu} taille={28} />
+						<div class="compet">
+							<span class="nom-compet">{ep.competition}{ep.phase ? `, ${ep.phase}` : ''}</span>
+							<span class="meta">{nomJour(cleJour(ep.date_prevue))}, {formatHeure(ep.date_prevue)} · {ep.participants.length} participants · {ep.nb_paris} pari{ep.nb_paris > 1 ? 's' : ''}</span>
+						</div>
+					</div>
+					{#if aConfirmer === `${ep.id}:annuler`}
+						<form method="POST" action="?/annuler" use:enhance={soumettre} class="confirmation">
+							<input type="hidden" name="serie" value={ep.id} />
+							<p>Annuler cette épreuve et rembourser tous ses paris ?</p>
+							<div class="boutons">
+								<button type="button" class="discret" onclick={() => (aConfirmer = null)}>Retour</button>
+								<button type="submit" class="danger" disabled={envoi}>Confirmer</button>
+							</div>
+						</form>
+					{:else}
+						<form method="POST" action="?/classer" use:enhance={soumettre} class="classement">
+							<input type="hidden" name="serie" value={ep.id} />
+							<label class="champ">Classement final, du 1er au dernier
+								<textarea name="classement" rows="8" placeholder={ep.participants.slice(0, 3).join('\n')} required></textarea>
+							</label>
+							<p class="aide">Une ligne par participant, dans l’ordre. Tu peux commencer une ligne par sa place (« 3. ») et nommer un groupe par un seul de ses joueurs. Un participant absent du classement est remboursé.</p>
+							{#if form?.action === 'classer' && form?.serie === ep.id && form?.erreur}<p class="erreur" role="alert">{form.erreur}</p>{/if}
+							<button type="submit" class="principal" disabled={envoi}>{envoi ? 'Règlement…' : 'Valider le classement'}</button>
+						</form>
+						<button class="lien-danger" onclick={() => (aConfirmer = `${ep.id}:annuler`)}>Épreuve annulée ou reportée de plus de 48 h</button>
+					{/if}
+				</article>
+			{/each}
 			{#each data.resultats as r (r.id)}
 				<article class="carte resultat">
 					<div class="ligne-tete">
@@ -407,7 +487,7 @@
 	.meta.echec {
 		color: var(--rouge-perte);
 	}
-	form.boutons-source {
+	.boutons-source {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 10px;
@@ -451,6 +531,50 @@
 	.facultatif {
 		font-weight: 400;
 		color: var(--texte-discret);
+	}
+	textarea {
+		width: 100%;
+		padding: 10px 12px;
+		border-radius: var(--r-bouton);
+		border: 1px solid var(--bordure-forte);
+		background: var(--surface-carte);
+		color: var(--texte-principal);
+		font: inherit;
+		font-size: 15px;
+		line-height: 1.45;
+		resize: vertical;
+	}
+	.apercu-lobby {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		overflow-x: auto;
+	}
+	.apercu-lobby table {
+		border-collapse: collapse;
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
+	}
+	.apercu-lobby th,
+	.apercu-lobby td {
+		padding: 6px 8px;
+		text-align: right;
+		border-bottom: 1px solid var(--surface-active);
+		white-space: nowrap;
+	}
+	.apercu-lobby th[scope='row'],
+	.apercu-lobby thead th:first-child {
+		text-align: left;
+		font-weight: 500;
+	}
+	.apercu-lobby thead th {
+		color: var(--texte-discret);
+		font-weight: 500;
+	}
+	form.classement {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 	}
 	input,
 	select {
