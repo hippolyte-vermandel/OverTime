@@ -209,7 +209,17 @@ prochains matchs, les changements d'horaire et les résultats depuis :
 
 Une source sans clé reste inactive.
 
-Pour les autres jeux, un admin saisit les matchs à la main. Il peut aussi lancer un import
+Pour les autres jeux, un admin saisit les matchs à la main. Pour les jeux en lobby
+(Fortnite, Warzone, TFT), il crée une épreuve en collant la liste des participants (une
+ligne par groupe, joueurs séparés par « / »), puis colle le classement final pour régler
+les paris « top X ».
+
+**Mettre à jour une base existante** (créée avant l'arrivée des épreuves en lobby) :
+
+```powershell
+psql -U overtime -d overtime -f db/migrations/001_lobby.sql
+psql -U overtime -d overtime -f db/fonctions.sql
+``` Il peut aussi lancer un import
 ou un aperçu depuis **Administration > Ajouter > Matchs importés automatiquement**.
 Un match reporté de plus de 48 h est annulé et les mises sont remboursées. Il revient
 ensuite au prochain import, à sa nouvelle date.

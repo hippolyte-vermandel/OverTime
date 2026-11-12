@@ -176,6 +176,64 @@ BEGIN
     ASSERT (SELECT COUNT(*) FROM saison WHERE ligue_id = 1) = 2, 'deux saisons';
 END $$;
 
+-- ---- Épreuve en lobby : paris « top X », un pari par participant ---------
+INSERT INTO jeu (code, nom, format) VALUES ('fortnite', 'Fortnite', 'lobby');
+INSERT INTO competition (jeu_id, nom, region)
+SELECT id, 'FNCS', 'EU' FROM jeu WHERE code = 'fortnite';
+DO $$
+DECLARE
+    s   int;
+    pa  int;
+    mk  int;
+    g   text;
+BEGIN
+    INSERT INTO serie (competition_id, date_prevue, best_of)
+    SELECT id, now() + interval '1 hour', NULL FROM competition WHERE nom = 'FNCS' RETURNING id INTO s;
+    FOREACH g IN ARRAY ARRAY['Alpha / Bravo', 'Charlie / Delta', 'Echo / Fox'] LOOP
+        INSERT INTO participation (serie_id, libelle) VALUES (s, g) RETURNING id INTO pa;
+        INSERT INTO marche (serie_id, type, participation_id, ligne, libelle, ferme_le)
+        VALUES (s, 'top', pa, 1, g || ' : top 1', now() + interval '1 hour') RETURNING id INTO mk;
+        INSERT INTO issue (marche_id, libelle, probabilite, cote) VALUES (mk, 'oui', .33, 3), (mk, 'non', .67, 1.5);
+    END LOOP;
+    -- un groupe sans aucun libellé ni équipe est refusé
+    BEGIN
+        INSERT INTO participation (serie_id) VALUES (s);
+        RAISE EXCEPTION 'participant vide accepté';
+    EXCEPTION WHEN check_violation THEN NULL;
+    END;
+END $$;
+CREATE TEMP VIEW t_issue AS
+SELECT i.id, pa.libelle AS groupe, i.libelle AS reponse
+  FROM issue i JOIN marche m ON m.id = i.marche_id JOIN participation pa ON pa.id = m.participation_id;
+-- Zoé parie sur deux duos de la même épreuve : permis
+SELECT placer_pari(5, 1, 50, ARRAY[(SELECT id FROM t_issue WHERE groupe = 'Alpha / Bravo' AND reponse = 'oui')]);
+SELECT placer_pari(5, 1, 40, ARRAY[(SELECT id FROM t_issue WHERE groupe = 'Charlie / Delta' AND reponse = 'oui')]);
+-- mais pas deux fois sur le même duo
+SELECT doit_echouer(format('SELECT placer_pari(5, 1, 50, ARRAY[%s])', (SELECT id FROM t_issue WHERE groupe = 'Alpha / Bravo' AND reponse = 'non')), 'déjà un pari sur ce participant');
+-- ni deux sélections de la même épreuve dans un combiné
+SELECT doit_echouer(format('SELECT placer_pari(5, 1, 50, ARRAY[%s, %s])',
+    (SELECT id FROM t_issue WHERE groupe = 'Echo / Fox' AND reponse = 'oui'),
+    (SELECT id FROM t_issue WHERE groupe = 'Charlie / Delta' AND reponse = 'non')), 'une sélection par match');
+DO $$
+DECLARE
+    s int := (SELECT serie_id FROM participation WHERE libelle = 'Alpha / Bravo');
+    avant int := solde(1, 5);
+BEGIN
+    UPDATE marche SET ferme_le = now() - interval '1 second' WHERE serie_id = s;
+    PERFORM doit_echouer(format('SELECT regler_epreuve(%s)', s), 'Aucun classement');
+    UPDATE participation SET classement = 1 WHERE libelle = 'Alpha / Bravo';
+    UPDATE participation SET classement = 3 WHERE libelle = 'Charlie / Delta';
+    -- Echo / Fox absent du classement : ses paris seront remboursés
+    PERFORM regler_epreuve(s);
+    ASSERT (SELECT statut FROM marche WHERE participation_id = (SELECT id FROM participation WHERE libelle = 'Echo / Fox')) = 'annule', 'absent : marché annulé';
+    ASSERT (SELECT p.statut FROM pari p JOIN pari_selection ps ON ps.pari_id = p.id JOIN t_issue t ON t.id = ps.issue_id WHERE t.groupe = 'Alpha / Bravo') = 'gagne', 'Alpha / Bravo top 1 : gagné';
+    ASSERT (SELECT p.statut FROM pari p JOIN pari_selection ps ON ps.pari_id = p.id JOIN t_issue t ON t.id = ps.issue_id WHERE t.groupe = 'Charlie / Delta') = 'perdu', 'Charlie / Delta 3e : perdu';
+    ASSERT solde(1, 5) = avant + 150, 'Zoé touche 50 x 3';
+    ASSERT (SELECT statut FROM serie WHERE id = s) = 'terminee', 'épreuve terminée';
+    ASSERT regler_epreuve(s) = 0, 'relancer ne règle rien deux fois';
+    ASSERT solde(1, 5) = avant + 150, 'ni ne paie deux fois';
+END $$;
+
 \echo 'Classements par saison (l''ancienne saison reste consultable) :'
 SELECT saison, pseudo, solde, paris_regles, paris_gagnes, rendement
   FROM v_classement WHERE ligue_id = 1 ORDER BY saison, rendement DESC NULLS LAST;

@@ -12,7 +12,11 @@
 	const STATUT = { en_attente: ['En attente', 'attente'], gagne: ['Gagné', 'gagne'], perdu: ['Perdu', 'perdu'], rembourse: ['Remboursé', 'annule'] };
 	// État d'une sélection : gagnée, perdue, annulée ou en attente
 	const etat = (s) => (s.statut_marche === 'annule' ? 'annule' : s.gagnante === true ? 'gagne' : s.gagnante === false ? 'perdu' : 'attente');
-	const choix = (s) => (s.type === 'score_exact' ? `Score ${s.libelle}` : s.type === 'map_jouee' ? `${s.marche.replace(' ?', '')} : ${s.libelle}` : s.libelle);
+	const choix = (s) =>
+		s.type === 'score_exact' ? `Score ${s.libelle}`
+		: s.type === 'map_jouee' ? `${s.marche.replace(' ?', '')} : ${s.libelle}`
+		: s.type === 'top' ? (s.libelle === 'non' ? `${s.marche} : non` : s.marche)
+		: s.libelle;
 	const quand = (iso) => `${nomJour(cleJour(iso))}, ${formatHeure(iso)}`;
 	const titre = (p) => (p.selections.length > 1 ? `Combiné de ${p.selections.length}` : `Simple, ${p.selections[0].competition}`);
 	const icones = {

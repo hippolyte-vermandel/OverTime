@@ -15,6 +15,7 @@ import {
 	ErreurSaisie
 } from '#lib/server/admin.js';
 import { noterRangs } from '#lib/server/paris.js';
+import { jeuxLobby, apercuEpreuve, creerEpreuve, epreuvesAClasser, classerEpreuve } from '#lib/server/lobby.js';
 import { SOURCES, derniers, importerMaintenant } from '#lib/server/import/index.js';
 
 // Réservé aux administrateurs de la ligue
@@ -26,15 +27,17 @@ function exigerAdmin(locals) {
 
 export async function load({ locals }) {
 	const j = exigerAdmin(locals);
-	const [jeux, ref, resultats, liste, code] = await Promise.all([
+	const [jeux, jeuxLobbys, epreuves, ref, resultats, liste, code] = await Promise.all([
 		jeuxDuels(),
+		jeuxLobby(),
+		epreuvesAClasser(),
 		referentiel(),
 		resultatsAValider(),
 		membres(j.ligue.id),
 		codeInvitation(j.ligue.id)
 	]);
 	const sources = SOURCES.map((s) => ({ cle: s.cle, jeu: s.jeu, nom: s.nom, lien: s.lien, variable: s.variable ?? null, active: s.active(), dernier: derniers[s.cle] ?? null }));
-	return { jeux, ...ref, resultats, membres: liste, code, sources };
+	return { jeux, jeuxLobby: jeuxLobbys, epreuves, ...ref, resultats, membres: liste, code, sources };
 }
 
 // Transforme une erreur en message pour l'administrateur
@@ -87,6 +90,49 @@ export const actions = {
 			return echec(e, 'creer', champs);
 		}
 		return { action: 'creer', succes: `${m.equipeA} contre ${m.equipeB} est ajouté, avec ses cotes. Les paris sont ouverts.` };
+	},
+
+	// Épreuve en lobby : aperçu des cotes (rien n'est enregistré) ou création avec ses paris « top X »
+	epreuve: async ({ request, locals }) => {
+		exigerAdmin(locals);
+		const f = Object.fromEntries(await request.formData());
+		const champs = { valeurs: f };
+		if (!f.jeu || !String(f.competition ?? '').trim() || !String(f.participants ?? '').trim() || !f.date || !f.heure)
+			return fail(400, { action: 'epreuve', erreur: 'Remplis le jeu, la compétition, la date, l’heure et la liste des participants.', ...champs });
+		const e = {
+			jeu: String(f.jeu),
+			competition: String(f.competition).trim(),
+			region: String(f.region ?? '').trim(),
+			phase: String(f.phase ?? '').trim(),
+			quand: await instant(`${f.date}T${f.heure}`),
+			texte: String(f.participants)
+		};
+		try {
+			if (f.apercu === 'oui') {
+				const a = await apercuEpreuve(e.jeu, e.texte, e.quand);
+				const groupes = [...a.groupes].sort((x, y) => y.note - x.note);
+				return { action: 'epreuve', apercu: { seuils: a.seuils, depart: a.depart, groupes }, ...champs };
+			}
+			const r = await creerEpreuve(e);
+			return { action: 'epreuve', succes: `Épreuve ajoutée : ${r.nb} participants, paris ${r.seuils.map((x) => (x === 1 ? 'vainqueur' : `top ${x}`)).join(', ')} ouverts (${r.depart}).` };
+		} catch (err) {
+			return echec(err, 'epreuve', champs);
+		}
+	},
+
+	// Classement final collé : règle tous les paris « top X » de l'épreuve
+	classer: async ({ request, locals }) => {
+		exigerAdmin(locals);
+		const f = await request.formData();
+		const serie = Number(f.get('serie'));
+		try {
+			const r = await classerEpreuve(serie, String(f.get('classement') ?? ''));
+			await noterRangs(locals.joueur.ligue.id).catch((e) => console.error('Relevé des rangs :', e.message));
+			const absents = r.absents.length ? ` ${r.absents.length} participant${r.absents.length > 1 ? 's' : ''} absent${r.absents.length > 1 ? 's' : ''} du classement : paris remboursés.` : '';
+			return { action: 'resultat', succes: `Classement de ${r.classes} participants enregistré. ${r.nb} pari${r.nb > 1 ? 's' : ''} réglé${r.nb > 1 ? 's' : ''}.${absents}` };
+		} catch (e) {
+			return echec(e, 'classer', { serie });
+		}
 	},
 
 	resultat: async ({ request, locals }) => {
